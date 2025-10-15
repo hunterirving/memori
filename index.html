@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>memori</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			background: #f5f5f0;
+			display: flex;
+			justify-content: center;
+			align-items: flex-start;
+			min-height: 100vh;
+			padding: 20px;
+		}
+
+		.page {
+			width: 8.5in;
+			height: 11in;
+			background: #fafaf8;
+			position: relative;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+			transform-origin: top center;
+		}
+
+		.grid {
+			position: absolute;
+			top: 0.25in;
+			left: 0.25in;
+			display: grid;
+			grid-template-columns: repeat(50, 4mm);
+			grid-template-rows: repeat(66, 4mm);
+			gap: 0;
+			line-height: 0;
+		}
+
+		.grid-cell {
+			width: 4mm;
+			height: 4mm;
+			box-sizing: border-box;
+			border-right: 1px solid #d0d0d0;
+			border-bottom: 1px solid #d0d0d0;
+			margin: 0;
+			padding: 0;
+			display: block;
+		}
+
+		.grid-cell:nth-child(-n+50) {
+			border-top: 1px solid #d0d0d0;
+		}
+
+		.grid-cell:nth-child(50n+1) {
+			border-left: 1px solid #d0d0d0;
+		}
+
+		.image-container {
+			position: absolute;
+			cursor: move;
+			outline: 2px solid transparent;
+			outline-offset: -2px;
+			transition: outline-color 0.2s;
+		}
+
+		.image-container:hover {
+			outline-color: #4a90e2;
+		}
+
+		.image-container.dragging {
+			opacity: 0.7;
+			outline-color: #4a90e2;
+		}
+
+		.image-container.resizing {
+			outline-color: #4a90e2;
+		}
+
+		.image-container img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: block;
+			pointer-events: none;
+		}
+
+		.resize-handle {
+			position: absolute;
+			background: #4a90e2;
+			opacity: 0;
+			transition: opacity 0.2s;
+		}
+
+		.image-container:hover .resize-handle {
+			opacity: 0.8;
+		}
+
+		.resize-handle.corner {
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+		}
+
+		.resize-handle.edge {
+			background: transparent;
+		}
+
+		.resize-handle.n { top: -5px; left: 50%; transform: translateX(-50%); width: 30px; height: 10px; cursor: n-resize; }
+		.resize-handle.s { bottom: -5px; left: 50%; transform: translateX(-50%); width: 30px; height: 10px; cursor: s-resize; }
+		.resize-handle.e { right: -5px; top: 50%; transform: translateY(-50%); width: 10px; height: 30px; cursor: e-resize; }
+		.resize-handle.w { left: -5px; top: 50%; transform: translateY(-50%); width: 10px; height: 30px; cursor: w-resize; }
+		.resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+		.resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+		.resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+		.resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+
+		@media print {
+			* {
+				-webkit-print-color-adjust: exact !important;
+				print-color-adjust: exact !important;
+			}
+
+			body {
+				background: white;
+				padding: 0;
+				margin: 0;
+			}
+
+			.page {
+				width: 8.5in;
+				height: 11in;
+				box-shadow: none;
+				margin: 0;
+				padding: 0;
+				background: white;
+				transform: none !important;
+			}
+
+			.grid {
+				position: absolute;
+				top: 0.25in;
+				left: 0.25in;
+			}
+
+			.grid-cell {
+				border-right: 1px solid #d0d0d0 !important;
+				border-bottom: 1px solid #d0d0d0 !important;
+				box-sizing: border-box !important;
+				width: 4mm !important;
+				height: 4mm !important;
+				margin: 0 !important;
+				padding: 0 !important;
+			}
+
+			.grid-cell:nth-child(-n+50) {
+				border-top: 1px solid #d0d0d0 !important;
+			}
+
+			.grid-cell:nth-child(50n+1) {
+				border-left: 1px solid #d0d0d0 !important;
+			}
+
+			.image-container {
+				outline: none !important;
+				position: absolute !important;
+			}
+
+			.image-container img {
+				width: 100% !important;
+				height: 100% !important;
+				object-fit: cover !important;
+			}
+
+			.resize-handle {
+				display: none !important;
+			}
+		}
+
+		@page {
+			size: 8.5in 11in;
+			margin: 0;
+		}
+	</style>
+</head>
+<body>
+	<div class="page">
+		<div class="grid" id="grid"></div>
+	</div>
+
+	<script>
+		const MM_TO_PX = 96 / 25.4;
+		const CELL_SIZE_MM = 4;
+		const CELL_SIZE_PX = CELL_SIZE_MM * MM_TO_PX;
+		const GRID_OFFSET_IN = 0.25;
+		const GRID_OFFSET_PX = GRID_OFFSET_IN * 96;
+		const GRID_COLS = 50;
+		const GRID_ROWS = 66;
+
+		const grid = document.getElementById('grid');
+		const page = document.querySelector('.page');
+
+		// Create grid cells
+		for (let i = 0; i < GRID_COLS * GRID_ROWS; i++) {
+			const cell = document.createElement('div');
+			cell.className = 'grid-cell';
+			grid.appendChild(cell);
+		}
+
+		let images = [];
+		let dragState = null;
+		let resizeState = null;
+
+		// Prevent default drag behavior
+		page.addEventListener('dragover', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+		});
+
+		page.addEventListener('drop', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+
+			const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+
+			files.forEach((file, idx) => {
+				const reader = new FileReader();
+				reader.onload = (event) => {
+					const img = new Image();
+					img.onload = () => {
+						const aspectRatio = img.width / img.height;
+
+						// Calculate best fit in grid cells
+						let widthCells = Math.round(Math.sqrt(16 * aspectRatio));
+						let heightCells = Math.round(widthCells / aspectRatio);
+
+						// Ensure minimum size
+						widthCells = Math.max(2, widthCells);
+						heightCells = Math.max(2, heightCells);
+
+						// Calculate position in grid cells
+						const xCell = 2 + (idx * 2) % 20;
+						const yCell = 2 + Math.floor((idx * 2) / 20) * 2;
+
+						addImage(event.target.result, xCell, yCell, widthCells, heightCells);
+					};
+					img.src = event.target.result;
+				};
+				reader.readAsDataURL(file);
+			});
+		});
+
+		function addImage(src, xCell, yCell, widthCells, heightCells) {
+			const container = document.createElement('div');
+			container.className = 'image-container';
+
+			const img = document.createElement('img');
+			img.src = src;
+			container.appendChild(img);
+
+			// Add resize handles
+			const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
+			handles.forEach(dir => {
+				const handle = document.createElement('div');
+				handle.className = `resize-handle ${dir.length === 1 ? 'edge' : 'corner'} ${dir}`;
+				handle.dataset.direction = dir;
+				container.appendChild(handle);
+			});
+
+			const imageData = { container, xCell, yCell, widthCells, heightCells };
+			images.push(imageData);
+
+			updateImagePosition(imageData);
+			grid.appendChild(container);
+
+			setupImageHandlers(imageData);
+		}
+
+		function updateImagePosition(img) {
+			img.container.style.left = img.xCell * CELL_SIZE_PX + 'px';
+			img.container.style.top = img.yCell * CELL_SIZE_PX + 'px';
+			img.container.style.width = img.widthCells * CELL_SIZE_PX + 'px';
+			img.container.style.height = img.heightCells * CELL_SIZE_PX + 'px';
+		}
+
+		function setupImageHandlers(imageData) {
+			const container = imageData.container;
+
+			// Moving
+			container.addEventListener('mousedown', (e) => {
+				if (e.target.classList.contains('resize-handle')) return;
+
+				e.preventDefault();
+				dragState = {
+					image: imageData,
+					startX: e.clientX,
+					startY: e.clientY,
+					startXCell: imageData.xCell,
+					startYCell: imageData.yCell
+				};
+				container.classList.add('dragging');
+			});
+
+			// Resizing
+			container.querySelectorAll('.resize-handle').forEach(handle => {
+				handle.addEventListener('mousedown', (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+
+					resizeState = {
+						image: imageData,
+						direction: handle.dataset.direction,
+						startX: e.clientX,
+						startY: e.clientY,
+						startXCell: imageData.xCell,
+						startYCell: imageData.yCell,
+						startWidthCells: imageData.widthCells,
+						startHeightCells: imageData.heightCells
+					};
+					container.classList.add('resizing');
+				});
+			});
+		}
+
+		document.addEventListener('mousemove', (e) => {
+			if (dragState) {
+				const dx = e.clientX - dragState.startX;
+				const dy = e.clientY - dragState.startY;
+
+				const dxCells = Math.round(dx / CELL_SIZE_PX);
+				const dyCells = Math.round(dy / CELL_SIZE_PX);
+
+				const newXCell = Math.max(0, dragState.startXCell + dxCells);
+				const newYCell = Math.max(0, dragState.startYCell + dyCells);
+
+				dragState.image.xCell = newXCell;
+				dragState.image.yCell = newYCell;
+				updateImagePosition(dragState.image);
+			}
+
+			if (resizeState) {
+				const dx = e.clientX - resizeState.startX;
+				const dy = e.clientY - resizeState.startY;
+
+				const dxCells = Math.round(dx / CELL_SIZE_PX);
+				const dyCells = Math.round(dy / CELL_SIZE_PX);
+
+				const dir = resizeState.direction;
+				const img = resizeState.image;
+
+				let newX = resizeState.startXCell;
+				let newY = resizeState.startYCell;
+				let newW = resizeState.startWidthCells;
+				let newH = resizeState.startHeightCells;
+
+				if (dir.includes('e')) {
+					newW = Math.max(1, resizeState.startWidthCells + dxCells);
+				}
+				if (dir.includes('w')) {
+					const delta = Math.min(dxCells, resizeState.startWidthCells - 1);
+					newX = resizeState.startXCell + delta;
+					newW = resizeState.startWidthCells - delta;
+				}
+				if (dir.includes('s')) {
+					newH = Math.max(1, resizeState.startHeightCells + dyCells);
+				}
+				if (dir.includes('n')) {
+					const delta = Math.min(dyCells, resizeState.startHeightCells - 1);
+					newY = resizeState.startYCell + delta;
+					newH = resizeState.startHeightCells - delta;
+				}
+
+				img.xCell = Math.max(0, newX);
+				img.yCell = Math.max(0, newY);
+				img.widthCells = newW;
+				img.heightCells = newH;
+				updateImagePosition(img);
+			}
+		});
+
+		document.addEventListener('mouseup', () => {
+			if (dragState) {
+				dragState.image.container.classList.remove('dragging');
+				dragState = null;
+			}
+			if (resizeState) {
+				resizeState.image.container.classList.remove('resizing');
+				resizeState = null;
+			}
+		});
+	</script>
+</body>
+</html>
