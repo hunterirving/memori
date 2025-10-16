@@ -303,11 +303,22 @@
 		function setupImageHandlers(imageData) {
 			const container = imageData.container;
 
-			// Moving
+			// Moving / Deleting
 			container.addEventListener('mousedown', (e) => {
 				if (e.target.classList.contains('resize-handle')) return;
 
 				e.preventDefault();
+
+				// Shift-click to delete
+				if (e.shiftKey) {
+					const index = images.indexOf(imageData);
+					if (index > -1) {
+						images.splice(index, 1);
+					}
+					container.remove();
+					return;
+				}
+
 				dragState = {
 					image: imageData,
 					startX: e.clientX,
