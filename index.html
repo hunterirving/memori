@@ -358,8 +358,8 @@
 				const dxCells = Math.round(dx / CELL_SIZE_PX);
 				const dyCells = Math.round(dy / CELL_SIZE_PX);
 
-				const newXCell = Math.max(0, dragState.startXCell + dxCells);
-				const newYCell = Math.max(0, dragState.startYCell + dyCells);
+				const newXCell = Math.max(0, Math.min(GRID_COLS - dragState.image.widthCells, dragState.startXCell + dxCells));
+				const newYCell = Math.max(0, Math.min(GRID_ROWS - dragState.image.heightCells, dragState.startYCell + dyCells));
 
 				dragState.image.xCell = newXCell;
 				dragState.image.yCell = newYCell;
@@ -376,30 +376,40 @@
 				const dir = resizeState.direction;
 				const img = resizeState.image;
 
-				let newX = resizeState.startXCell;
-				let newY = resizeState.startYCell;
-				let newW = resizeState.startWidthCells;
-				let newH = resizeState.startHeightCells;
+				let newX = img.xCell;
+				let newY = img.yCell;
+				let newW = img.widthCells;
+				let newH = img.heightCells;
 
 				if (dir.includes('e')) {
-					newW = Math.max(1, resizeState.startWidthCells + dxCells);
+					const proposedW = Math.max(1, resizeState.startWidthCells + dxCells);
+					// Clamp to grid boundary
+					newW = Math.min(proposedW, GRID_COLS - resizeState.startXCell);
 				}
 				if (dir.includes('w')) {
 					const delta = Math.min(dxCells, resizeState.startWidthCells - 1);
-					newX = resizeState.startXCell + delta;
-					newW = resizeState.startWidthCells - delta;
+					const proposedX = resizeState.startXCell + delta;
+					// Clamp to grid boundary
+					const clampedX = Math.max(0, proposedX);
+					newX = clampedX;
+					newW = resizeState.startWidthCells - (clampedX - resizeState.startXCell);
 				}
 				if (dir.includes('s')) {
-					newH = Math.max(1, resizeState.startHeightCells + dyCells);
+					const proposedH = Math.max(1, resizeState.startHeightCells + dyCells);
+					// Clamp to grid boundary
+					newH = Math.min(proposedH, GRID_ROWS - resizeState.startYCell);
 				}
 				if (dir.includes('n')) {
 					const delta = Math.min(dyCells, resizeState.startHeightCells - 1);
-					newY = resizeState.startYCell + delta;
-					newH = resizeState.startHeightCells - delta;
+					const proposedY = resizeState.startYCell + delta;
+					// Clamp to grid boundary
+					const clampedY = Math.max(0, proposedY);
+					newY = clampedY;
+					newH = resizeState.startHeightCells - (clampedY - resizeState.startYCell);
 				}
 
-				img.xCell = Math.max(0, newX);
-				img.yCell = Math.max(0, newY);
+				img.xCell = newX;
+				img.yCell = newY;
 				img.widthCells = newW;
 				img.heightCells = newH;
 				updateImagePosition(img);
