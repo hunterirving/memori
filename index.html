@@ -82,6 +82,10 @@
 			outline-color: #4a90e2;
 		}
 
+		body.resizing * {
+			cursor: inherit !important;
+		}
+
 		.image-container img {
 			width: 100%;
 			height: 100%;
@@ -335,6 +339,11 @@
 					e.preventDefault();
 					e.stopPropagation();
 
+					// Get the cursor style from the handle and apply it to the body
+					const cursorStyle = window.getComputedStyle(handle).cursor;
+					document.body.style.cursor = cursorStyle;
+					document.body.classList.add('resizing');
+
 					resizeState = {
 						image: imageData,
 						direction: handle.dataset.direction,
@@ -424,6 +433,9 @@
 			if (resizeState) {
 				resizeState.image.container.classList.remove('resizing');
 				resizeState = null;
+				// Restore the default cursor
+				document.body.style.cursor = '';
+				document.body.classList.remove('resizing');
 			}
 		});
 	</script>
