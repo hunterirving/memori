@@ -77,17 +77,43 @@
 			background: var(--color-bg-page);
 		}
 
-		.image-container:hover {
-			outline-color: var(--color-accent);
+		.image-container::after {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			pointer-events: none;
+			border: 2px solid transparent;
+			transition: border-color 0.2s;
+			z-index: 1;
+			overflow: hidden;
+		}
+
+		.image-container .image-wrapper {
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			overflow: hidden;
+		}
+
+		.image-container:hover::after {
+			border-color: var(--color-accent);
 		}
 
 		.image-container.dragging {
 			opacity: 0.7;
-			outline-color: var(--color-accent);
 		}
 
-		.image-container.resizing {
-			outline-color: var(--color-accent);
+		.image-container.dragging::after {
+			border-color: var(--color-accent);
+		}
+
+		.image-container.resizing::after {
+			border-color: var(--color-accent);
 		}
 
 		body.resizing *,
@@ -96,11 +122,13 @@
 		}
 
 		.image-container img {
-			width: 100%;
-			height: 100%;
-			object-fit: cover;
+			position: absolute;
+			top: 50%;
+			left: 50%;
 			display: block;
 			pointer-events: none;
+			transform-origin: center center;
+			transition: none;
 		}
 
 		.resize-handle {
@@ -108,6 +136,7 @@
 			background: var(--color-accent);
 			opacity: 0;
 			transition: opacity 0.2s;
+			z-index: 2;
 		}
 
 		.image-container:hover .resize-handle {
@@ -123,10 +152,8 @@
 		.resize-handle.corner::before {
 			content: '';
 			position: absolute;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
+			width: 10px;
+			height: 10px;
 			background: var(--color-accent);
 			border-radius: 50%;
 		}
@@ -139,10 +166,18 @@
 		.resize-handle.s { bottom: -5px; left: 5px; right: 5px; height: 10px; cursor: s-resize; }
 		.resize-handle.e { right: -5px; top: 5px; bottom: 5px; width: 10px; cursor: e-resize; }
 		.resize-handle.w { left: -5px; top: 5px; bottom: 5px; width: 10px; cursor: w-resize; }
+
 		.resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+		.resize-handle.ne::before { top: 0; right: 0; }
+
 		.resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+		.resize-handle.nw::before { top: 0; left: 0; }
+
 		.resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+		.resize-handle.se::before { bottom: 0; right: 0; }
+
 		.resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+		.resize-handle.sw::before { bottom: 0; left: 0; }
 
 		@media print {
 			* {
@@ -203,10 +238,22 @@
 				background: var(--color-white) !important;
 			}
 
+			.image-container .image-wrapper {
+				position: absolute !important;
+				top: 0 !important;
+				left: 0 !important;
+				right: 0 !important;
+				bottom: 0 !important;
+				overflow: hidden !important;
+			}
+
 			.image-container img {
-				width: 100% !important;
-				height: 100% !important;
-				object-fit: cover !important;
+				position: absolute !important;
+				top: 50% !important;
+				left: 50% !important;
+				display: block !important;
+				pointer-events: none !important;
+				/* Preserve the transform from the screen view */
 			}
 
 			.resize-handle {
@@ -350,9 +397,12 @@
 				container.style.zIndex = zIndex;
 			}
 
+			const wrapper = document.createElement('div');
+			wrapper.className = 'image-wrapper';
 			const img = document.createElement('img');
 			img.src = src;
-			container.appendChild(img);
+			wrapper.appendChild(img);
+			container.appendChild(wrapper);
 
 			// Add resize handles
 			const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
@@ -363,7 +413,36 @@
 				container.appendChild(handle);
 			});
 
-			const imageData = { container, xCell, yCell, widthCells, heightCells };
+			const imageData = {
+				container,
+				xCell,
+				yCell,
+				widthCells,
+				heightCells,
+				// Image positioning within container (in pixels, relative to center)
+				panX: 0,
+				panY: 0,
+				userScale: 1,  // user zoom level (1-5)
+				// Store natural image dimensions for calculations
+				naturalWidth: 0,
+				naturalHeight: 0,
+				baseScale: 1  // scale needed to cover container
+			};
+
+			// Calculate dimensions and scale once image loads
+			img.onload = () => {
+				imageData.naturalWidth = img.naturalWidth;
+				imageData.naturalHeight = img.naturalHeight;
+
+				// Calculate base scale to cover container (mimics object-fit: cover)
+				const containerWidth = imageData.widthCells * CELL_SIZE_PX;
+				const containerHeight = imageData.heightCells * CELL_SIZE_PX;
+				const scaleX = containerWidth / img.naturalWidth;
+				const scaleY = containerHeight / img.naturalHeight;
+				imageData.baseScale = Math.max(scaleX, scaleY);
+
+				updateImagePosition(imageData);
+			};
 			images.push(imageData);
 
 			updateImagePosition(imageData);
@@ -372,11 +451,57 @@
 			setupImageHandlers(imageData);
 		}
 
+		function calculatePanBounds(imageData) {
+			const containerWidth = imageData.widthCells * CELL_SIZE_PX;
+			const containerHeight = imageData.heightCells * CELL_SIZE_PX;
+
+			if (imageData.naturalWidth === 0 || imageData.naturalHeight === 0) {
+				return { maxPanX: 0, maxPanY: 0 };
+			}
+
+			// Calculate actual rendered size with both base scale and user scale
+			const totalScale = imageData.baseScale * imageData.userScale;
+			const renderedWidth = imageData.naturalWidth * totalScale;
+			const renderedHeight = imageData.naturalHeight * totalScale;
+
+			// Calculate maximum pan in each direction
+			const maxPanX = Math.max(0, (renderedWidth - containerWidth) / 2);
+			const maxPanY = Math.max(0, (renderedHeight - containerHeight) / 2);
+
+			return { maxPanX, maxPanY };
+		}
+
+		function clampPan(imageData) {
+			const { maxPanX, maxPanY } = calculatePanBounds(imageData);
+			imageData.panX = Math.max(-maxPanX, Math.min(maxPanX, imageData.panX));
+			imageData.panY = Math.max(-maxPanY, Math.min(maxPanY, imageData.panY));
+		}
+
 		function updateImagePosition(img) {
 			img.container.style.left = img.xCell * CELL_SIZE_PX + 'px';
 			img.container.style.top = img.yCell * CELL_SIZE_PX + 'px';
 			img.container.style.width = img.widthCells * CELL_SIZE_PX + 'px';
 			img.container.style.height = img.heightCells * CELL_SIZE_PX + 'px';
+
+			// Recalculate baseScale if container size changed
+			if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+				const containerWidth = img.widthCells * CELL_SIZE_PX;
+				const containerHeight = img.heightCells * CELL_SIZE_PX;
+				const scaleX = containerWidth / img.naturalWidth;
+				const scaleY = containerHeight / img.naturalHeight;
+				img.baseScale = Math.max(scaleX, scaleY);
+
+				// Reclamp pan after recalculating base scale
+				clampPan(img);
+			}
+
+			// Apply image positioning and scale using transform
+			const imgElement = img.container.querySelector('img');
+			if (imgElement) {
+				const totalScale = img.baseScale * img.userScale;
+				// Transform: translate from center (-50%, -50%), then pan, then scale
+				imgElement.style.transform = `translate(-50%, -50%) translate(${img.panX}px, ${img.panY}px) scale(${totalScale})`;
+			}
 		}
 
 		function setupImageHandlers(imageData) {
@@ -436,6 +561,51 @@
 					container.classList.add('resizing');
 				});
 			});
+
+			// Pan and Zoom with wheel events (macOS trackpad gestures)
+			container.addEventListener('wheel', (e) => {
+				// Don't interfere with dragging or resizing
+				if (dragState || resizeState) return;
+
+				e.preventDefault();
+				e.stopPropagation();
+
+				// Detect pinch zoom (ctrlKey is set for pinch gestures on macOS trackpad)
+				if (e.ctrlKey) {
+					// Zoom under cursor
+					const rect = container.getBoundingClientRect();
+					const mouseX = e.clientX - rect.left;
+					const mouseY = e.clientY - rect.top;
+
+					// Calculate mouse position relative to container center
+					const centerX = rect.width / 2;
+					const centerY = rect.height / 2;
+					const offsetX = mouseX - centerX;
+					const offsetY = mouseY - centerY;
+
+					const oldUserScale = imageData.userScale;
+					const zoomDelta = -e.deltaY * 0.01;
+					const newUserScale = Math.max(1, Math.min(5, oldUserScale * (1 + zoomDelta)));
+
+					// Adjust pan to keep point under cursor stationary
+					const scaleFactor = newUserScale / oldUserScale - 1;
+					imageData.panX -= offsetX * scaleFactor;
+					imageData.panY -= offsetY * scaleFactor;
+					imageData.userScale = newUserScale;
+
+					// Clamp after zooming to prevent whitespace
+					clampPan(imageData);
+				} else {
+					// Pan (two-finger scroll on macOS trackpad)
+					imageData.panX -= e.deltaX;
+					imageData.panY -= e.deltaY;
+
+					// Clamp pan to prevent whitespace
+					clampPan(imageData);
+				}
+
+				updateImagePosition(imageData);
+			}, { passive: false });
 		}
 
 		document.addEventListener('mousemove', (e) => {
