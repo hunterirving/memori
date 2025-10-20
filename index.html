@@ -233,22 +233,29 @@
 		let dragState = null;
 		let resizeState = null;
 
-		// Prevent default drag behavior
-		page.addEventListener('dragover', (e) => {
+		// Prevent default drag behavior on entire document
+		document.addEventListener('dragover', (e) => {
 			e.preventDefault();
 			e.stopPropagation();
 		});
 
-		page.addEventListener('drop', async (e) => {
+		document.addEventListener('drop', async (e) => {
 			e.preventDefault();
 			e.stopPropagation();
 
 			const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+			if (files.length === 0) return;
 
 			// Get drop position relative to the grid
 			const gridRect = grid.getBoundingClientRect();
-			const dropX = e.clientX - gridRect.left;
-			const dropY = e.clientY - gridRect.top;
+			const gridWidth = GRID_COLS * CELL_SIZE_PX;
+			const gridHeight = GRID_ROWS * CELL_SIZE_PX;
+
+			// Clamp drop position to grid boundaries
+			let dropX = e.clientX - gridRect.left;
+			let dropY = e.clientY - gridRect.top;
+			dropX = Math.max(0, Math.min(gridWidth, dropX));
+			dropY = Math.max(0, Math.min(gridHeight, dropY));
 
 			// Load first image to get base dimensions
 			let firstImageDimensions = null;
