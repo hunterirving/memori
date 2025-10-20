@@ -159,6 +159,7 @@ function addImage(src, xCell, yCell, widthCells, heightCells) {
 		panX: 0,
 		panY: 0,
 		userScale: 1,  // user zoom level (1-5)
+		rotation: 0,  // rotation in degrees (0, 90, 180, 270)
 		// Store natural image dimensions for calculations
 		naturalWidth: 0,
 		naturalHeight: 0,
@@ -197,10 +198,15 @@ function calculatePanBounds(imageData) {
 		return { maxPanX: 0, maxPanY: 0 };
 	}
 
+	// When rotated 90° or 270°, the image dimensions are effectively swapped
+	const isRotated90or270 = imageData.rotation % 180 !== 0;
+	const effectiveWidth = isRotated90or270 ? imageData.naturalHeight : imageData.naturalWidth;
+	const effectiveHeight = isRotated90or270 ? imageData.naturalWidth : imageData.naturalHeight;
+
 	// Calculate actual rendered size with both base scale and user scale
 	const totalScale = imageData.baseScale * imageData.userScale;
-	const renderedWidth = imageData.naturalWidth * totalScale;
-	const renderedHeight = imageData.naturalHeight * totalScale;
+	const renderedWidth = effectiveWidth * totalScale;
+	const renderedHeight = effectiveHeight * totalScale;
 
 	// Calculate maximum pan in each direction
 	const maxPanX = Math.max(0, (renderedWidth - containerWidth) / 2);
@@ -231,8 +237,14 @@ function updateImagePosition(img) {
 	if (img.naturalWidth > 0 && img.naturalHeight > 0) {
 		const containerWidth = img.widthCells * CELL_SIZE_PX;
 		const containerHeight = img.heightCells * CELL_SIZE_PX;
-		const scaleX = containerWidth / img.naturalWidth;
-		const scaleY = containerHeight / img.naturalHeight;
+
+		// When rotated 90° or 270°, the image dimensions are effectively swapped
+		const isRotated90or270 = img.rotation % 180 !== 0;
+		const effectiveWidth = isRotated90or270 ? img.naturalHeight : img.naturalWidth;
+		const effectiveHeight = isRotated90or270 ? img.naturalWidth : img.naturalHeight;
+
+		const scaleX = containerWidth / effectiveWidth;
+		const scaleY = containerHeight / effectiveHeight;
 		img.baseScale = Math.max(scaleX, scaleY);
 
 		// Reclamp pan after recalculating base scale
@@ -243,8 +255,9 @@ function updateImagePosition(img) {
 	const imgElement = img.container.querySelector('img');
 	if (imgElement) {
 		const totalScale = img.baseScale * img.userScale;
-		// Transform: translate from center (-50%, -50%), then pan, then scale
-		imgElement.style.transform = `translate(-50%, -50%) translate(${img.panX}px, ${img.panY}px) scale(${totalScale})`;
+		// Transform: translate from center (-50%, -50%), scale, rotate, then pan
+		// Pan is applied after rotation so it stays relative to the image's rotated state
+		imgElement.style.transform = `translate(-50%, -50%) scale(${totalScale}) rotate(${img.rotation}deg) translate(${img.panX}px, ${img.panY}px)`;
 	}
 }
 
@@ -277,6 +290,32 @@ function setupImageHandlers(imageData) {
 			return;
 		}
 
+		// Option-click (or Alt-click on Windows/Linux) to rotate
+		if (e.altKey) {
+			// Rotate 90 degrees clockwise
+			const oldRotation = imageData.rotation;
+			imageData.rotation = (imageData.rotation + 90) % 360;
+
+			// Don't rotate pan coordinates - they stay in the image's original coordinate system
+			// The CSS transform applies rotation before pan, so pan is relative to the rotated image
+
+			// When rotating between portrait and landscape (90° or 270°), we need to swap dimensions
+			if ((oldRotation % 180 === 0 && imageData.rotation % 180 !== 0) ||
+			    (oldRotation % 180 !== 0 && imageData.rotation % 180 === 0)) {
+				// Swap width and height
+				const temp = imageData.widthCells;
+				imageData.widthCells = imageData.heightCells;
+				imageData.heightCells = temp;
+
+				// Adjust position to keep image within bounds after dimension swap
+				imageData.xCell = Math.max(0, Math.min(GRID_COLS - imageData.widthCells, imageData.xCell));
+				imageData.yCell = Math.max(0, Math.min(GRID_ROWS - imageData.heightCells, imageData.yCell));
+			}
+
+			updateImagePosition(imageData);
+			return;
+		}
+
 		// Cmd-click (or Ctrl-click on Windows/Linux) to duplicate
 		if (e.metaKey || e.ctrlKey) {
 			// Calculate target position (2 cells to the right if there's room)
@@ -306,11 +345,12 @@ function setupImageHandlers(imageData) {
 				imageData.heightCells
 			);
 
-			// Copy pan and zoom settings from original
+			// Copy pan, zoom, and rotation settings from original
 			// Store the original settings to apply after image loads
 			const originalPanX = imageData.panX;
 			const originalPanY = imageData.panY;
 			const originalUserScale = imageData.userScale;
+			const originalRotation = imageData.rotation;
 
 			// Override the onload to copy settings
 			const newImg = newImageData.container.querySelector('img');
@@ -323,6 +363,7 @@ function setupImageHandlers(imageData) {
 				newImageData.panX = originalPanX;
 				newImageData.panY = originalPanY;
 				newImageData.userScale = originalUserScale;
+				newImageData.rotation = originalRotation;
 				updateImagePosition(newImageData);
 			};
 
@@ -331,6 +372,7 @@ function setupImageHandlers(imageData) {
 				newImageData.panX = originalPanX;
 				newImageData.panY = originalPanY;
 				newImageData.userScale = originalUserScale;
+				newImageData.rotation = originalRotation;
 				updateImagePosition(newImageData);
 			}
 
