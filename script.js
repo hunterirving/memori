@@ -185,6 +185,8 @@ function addImage(src, xCell, yCell, widthCells, heightCells) {
 	grid.appendChild(container);
 
 	setupImageHandlers(imageData);
+
+	return imageData;
 }
 
 function calculatePanBounds(imageData) {
@@ -259,7 +261,7 @@ function setupImageHandlers(imageData) {
 		bringToFront(container);
 	});
 
-	// Moving / Deleting
+	// Moving / Deleting / Duplicating
 	container.addEventListener('mousedown', (e) => {
 		if (e.target.classList.contains('resize-handle')) return;
 
@@ -272,6 +274,66 @@ function setupImageHandlers(imageData) {
 				images.splice(index, 1);
 			}
 			container.remove();
+			return;
+		}
+
+		// Cmd-click (or Ctrl-click on Windows/Linux) to duplicate
+		if (e.metaKey || e.ctrlKey) {
+			// Calculate target position (2 cells to the right if there's room)
+			let newXCell = imageData.xCell + 2;
+			let newYCell = imageData.yCell;
+
+			// If there's not enough room to the right, try to place appropriately
+			if (newXCell + imageData.widthCells > GRID_COLS) {
+				// Try wrapping to next row
+				newXCell = 0;
+				newYCell = imageData.yCell + imageData.heightCells;
+
+				// If that goes off the bottom, place at origin
+				if (newYCell + imageData.heightCells > GRID_ROWS) {
+					newXCell = 0;
+					newYCell = 0;
+				}
+			}
+
+			// Create duplicate with the same image source and dimensions
+			const imgElement = container.querySelector('img');
+			const newImageData = addImage(
+				imgElement.src,
+				newXCell,
+				newYCell,
+				imageData.widthCells,
+				imageData.heightCells
+			);
+
+			// Copy pan and zoom settings from original
+			// Store the original settings to apply after image loads
+			const originalPanX = imageData.panX;
+			const originalPanY = imageData.panY;
+			const originalUserScale = imageData.userScale;
+
+			// Override the onload to copy settings
+			const newImg = newImageData.container.querySelector('img');
+			const originalOnload = newImg.onload;
+			newImg.onload = () => {
+				// Run the original onload first
+				if (originalOnload) originalOnload.call(newImg);
+
+				// Then apply the copied settings
+				newImageData.panX = originalPanX;
+				newImageData.panY = originalPanY;
+				newImageData.userScale = originalUserScale;
+				updateImagePosition(newImageData);
+			};
+
+			// If image is already loaded (cached), trigger the settings copy
+			if (newImg.complete && newImageData.naturalWidth > 0) {
+				newImageData.panX = originalPanX;
+				newImageData.panY = originalPanY;
+				newImageData.userScale = originalUserScale;
+				updateImagePosition(newImageData);
+			}
+
 			return;
 		}
 
