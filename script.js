@@ -199,7 +199,7 @@ function calculatePanBounds(imageData) {
 		return { maxPanX: 0, maxPanY: 0 };
 	}
 
-	// Pan coordinates are in the image's original coordinate system (before rotation)
+	// Pan coordinates are in the image's original coordinate system (before scale and rotation)
 	// So we need to calculate bounds based on the original image dimensions
 	const isRotated90or270 = imageData.rotation % 180 !== 0;
 
@@ -210,14 +210,16 @@ function calculatePanBounds(imageData) {
 	const effectiveContainerWidth = isRotated90or270 ? containerHeight : containerWidth;
 	const effectiveContainerHeight = isRotated90or270 ? containerWidth : containerHeight;
 
-	// Calculate actual rendered size with both base scale and user scale
+	// Pan values are in pre-scale image space, but the CSS transform scales them
+	// So we need to calculate bounds in pre-scale space
+	// The image's natural size minus the container size (in pre-scale space) gives us the overhang
 	const totalScale = imageData.baseScale * imageData.userScale;
-	const renderedWidth = imageData.naturalWidth * totalScale;
-	const renderedHeight = imageData.naturalHeight * totalScale;
+	const containerWidthInImageSpace = effectiveContainerWidth / totalScale;
+	const containerHeightInImageSpace = effectiveContainerHeight / totalScale;
 
-	// Calculate maximum pan in each direction
-	const maxPanX = Math.max(0, (renderedWidth - effectiveContainerWidth) / 2);
-	const maxPanY = Math.max(0, (renderedHeight - effectiveContainerHeight) / 2);
+	// Calculate maximum pan in each direction (in pre-scale image space)
+	const maxPanX = Math.max(0, (imageData.naturalWidth - containerWidthInImageSpace) / 2);
+	const maxPanY = Math.max(0, (imageData.naturalHeight - containerHeightInImageSpace) / 2);
 
 	return { maxPanX, maxPanY };
 }
@@ -447,8 +449,8 @@ function setupImageHandlers(imageData) {
 		if (e.ctrlKey) {
 			// Zoom at cursor position
 			const rect = container.getBoundingClientRect();
-			const cursorX = e.clientX - rect.left - rect.width / 2;
-			const cursorY = e.clientY - rect.top - rect.height / 2;
+			const cursorX = e.clientX - rect.left - rect.width / 2; // Screen pixels from center
+			const cursorY = e.clientY - rect.top - rect.height / 2; // Screen pixels from center
 
 			const oldUserScale = imageData.userScale;
 			const oldTotalScale = imageData.baseScale * oldUserScale;
@@ -456,10 +458,15 @@ function setupImageHandlers(imageData) {
 			const newUserScale = Math.max(1, Math.min(5, oldUserScale * (1 + zoomDelta)));
 			const newTotalScale = imageData.baseScale * newUserScale;
 
+			// Convert cursor position to pre-scale image space
+			const cursorXInImageSpace = cursorX / oldTotalScale;
+			const cursorYInImageSpace = cursorY / oldTotalScale;
+
 			// Adjust pan to keep the point under cursor fixed during zoom
+			// Pan is in pre-scale image space, so we work entirely in that space
 			const scaleRatio = newTotalScale / oldTotalScale;
-			imageData.panX = cursorX * (1 - scaleRatio) + imageData.panX * scaleRatio;
-			imageData.panY = cursorY * (1 - scaleRatio) + imageData.panY * scaleRatio;
+			imageData.panX = cursorXInImageSpace * (1 - scaleRatio) + imageData.panX * scaleRatio;
+			imageData.panY = cursorYInImageSpace * (1 - scaleRatio) + imageData.panY * scaleRatio;
 			imageData.userScale = newUserScale;
 
 			// Clamp after zooming to prevent whitespace
@@ -475,8 +482,10 @@ function setupImageHandlers(imageData) {
 			const rotatedDeltaX = e.deltaX * cos - e.deltaY * sin;
 			const rotatedDeltaY = e.deltaX * sin + e.deltaY * cos;
 
-			imageData.panX -= rotatedDeltaX;
-			imageData.panY -= rotatedDeltaY;
+			// Convert screen-space delta to pre-scale image space
+			const totalScale = imageData.baseScale * imageData.userScale;
+			imageData.panX -= rotatedDeltaX / totalScale;
+			imageData.panY -= rotatedDeltaY / totalScale;
 
 			// Clamp pan to prevent whitespace
 			clampPan(imageData);
