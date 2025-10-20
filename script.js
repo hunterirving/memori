@@ -191,6 +191,7 @@ function addImage(src, xCell, yCell, widthCells, heightCells) {
 }
 
 function calculatePanBounds(imageData) {
+	// Container dimensions in the current (possibly swapped) grid orientation
 	const containerWidth = imageData.widthCells * CELL_SIZE_PX;
 	const containerHeight = imageData.heightCells * CELL_SIZE_PX;
 
@@ -198,19 +199,25 @@ function calculatePanBounds(imageData) {
 		return { maxPanX: 0, maxPanY: 0 };
 	}
 
-	// When rotated 90° or 270°, the image dimensions are effectively swapped
+	// Pan coordinates are in the image's original coordinate system (before rotation)
+	// So we need to calculate bounds based on the original image dimensions
 	const isRotated90or270 = imageData.rotation % 180 !== 0;
-	const effectiveWidth = isRotated90or270 ? imageData.naturalHeight : imageData.naturalWidth;
-	const effectiveHeight = isRotated90or270 ? imageData.naturalWidth : imageData.naturalHeight;
+
+	// For pan bounds, we need to match image dimensions to container dimensions
+	// in the image's coordinate space (not the screen's coordinate space)
+	// When rotated 90/270, panX constrains vertical screen movement (maps to container height)
+	// and panY constrains horizontal screen movement (maps to container width)
+	const effectiveContainerWidth = isRotated90or270 ? containerHeight : containerWidth;
+	const effectiveContainerHeight = isRotated90or270 ? containerWidth : containerHeight;
 
 	// Calculate actual rendered size with both base scale and user scale
 	const totalScale = imageData.baseScale * imageData.userScale;
-	const renderedWidth = effectiveWidth * totalScale;
-	const renderedHeight = effectiveHeight * totalScale;
+	const renderedWidth = imageData.naturalWidth * totalScale;
+	const renderedHeight = imageData.naturalHeight * totalScale;
 
 	// Calculate maximum pan in each direction
-	const maxPanX = Math.max(0, (renderedWidth - containerWidth) / 2);
-	const maxPanY = Math.max(0, (renderedHeight - containerHeight) / 2);
+	const maxPanX = Math.max(0, (renderedWidth - effectiveContainerWidth) / 2);
+	const maxPanY = Math.max(0, (renderedHeight - effectiveContainerHeight) / 2);
 
 	return { maxPanX, maxPanY };
 }
@@ -449,8 +456,17 @@ function setupImageHandlers(imageData) {
 			clampPan(imageData);
 		} else {
 			// Pan (two-finger scroll on macOS trackpad)
-			imageData.panX -= e.deltaX;
-			imageData.panY -= e.deltaY;
+			// Transform deltas to account for image rotation
+			const angle = -imageData.rotation * Math.PI / 180; // Negative because we want screen-to-image transform
+			const cos = Math.cos(angle);
+			const sin = Math.sin(angle);
+
+			// Rotate the delta vector by the negative of the image rotation
+			const rotatedDeltaX = e.deltaX * cos - e.deltaY * sin;
+			const rotatedDeltaY = e.deltaX * sin + e.deltaY * cos;
+
+			imageData.panX -= rotatedDeltaX;
+			imageData.panY -= rotatedDeltaY;
 
 			// Clamp pan to prevent whitespace
 			clampPan(imageData);
