@@ -238,7 +238,7 @@
 			e.stopPropagation();
 		});
 
-		page.addEventListener('drop', (e) => {
+		page.addEventListener('drop', async (e) => {
 			e.preventDefault();
 			e.stopPropagation();
 
@@ -249,6 +249,38 @@
 			const dropX = e.clientX - gridRect.left;
 			const dropY = e.clientY - gridRect.top;
 
+			// Load first image to get base dimensions
+			let firstImageDimensions = null;
+			if (files.length > 0) {
+				const firstFile = files[0];
+				const reader = new FileReader();
+				const dataUrl = await new Promise(resolve => {
+					reader.onload = (e) => resolve(e.target.result);
+					reader.readAsDataURL(firstFile);
+				});
+
+				const img = new Image();
+				await new Promise(resolve => {
+					img.onload = () => {
+						const aspectRatio = img.width / img.height;
+						let widthCells, heightCells;
+						if (aspectRatio >= 1) {
+							heightCells = 5;
+							widthCells = Math.round(heightCells * aspectRatio);
+						} else {
+							widthCells = 5;
+							heightCells = Math.round(widthCells / aspectRatio);
+						}
+						widthCells = Math.min(widthCells, GRID_COLS);
+						heightCells = Math.min(heightCells, GRID_ROWS);
+						firstImageDimensions = { widthCells, heightCells };
+						resolve();
+					};
+					img.src = dataUrl;
+				});
+			}
+
+			// Now process all files
 			files.forEach((file, idx) => {
 				const reader = new FileReader();
 				reader.onload = (event) => {
@@ -272,15 +304,15 @@
 						widthCells = Math.min(widthCells, GRID_COLS);
 						heightCells = Math.min(heightCells, GRID_ROWS);
 
-						// Calculate position near drop point
-						let xCell = Math.round(dropX / CELL_SIZE_PX) + (idx * 2);
-						let yCell = Math.round(dropY / CELL_SIZE_PX);
+						// Calculate position with first image's center under drop point
+						let xCell = Math.round(dropX / CELL_SIZE_PX - firstImageDimensions.widthCells / 2) + (idx * 2);
+						let yCell = Math.round(dropY / CELL_SIZE_PX - firstImageDimensions.heightCells / 2);
 
 						// Ensure image stays within grid bounds
 						xCell = Math.max(0, Math.min(GRID_COLS - widthCells, xCell));
 						yCell = Math.max(0, Math.min(GRID_ROWS - heightCells, yCell));
 
-						addImage(event.target.result, xCell, yCell, widthCells, heightCells);
+						addImage(event.target.result, xCell, yCell, widthCells, heightCells, idx + 1);
 					};
 					img.src = event.target.result;
 				};
@@ -288,9 +320,12 @@
 			});
 		});
 
-		function addImage(src, xCell, yCell, widthCells, heightCells) {
+		function addImage(src, xCell, yCell, widthCells, heightCells, zIndex = 0) {
 			const container = document.createElement('div');
 			container.className = 'image-container';
+			if (zIndex > 0) {
+				container.style.zIndex = zIndex;
+			}
 
 			const img = document.createElement('img');
 			img.src = src;
