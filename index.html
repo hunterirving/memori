@@ -6,6 +6,14 @@
 	<title>memori</title>
 	<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>">
 	<style>
+		:root {
+			--color-bg-body: #f5f5f0;
+			--color-bg-page: #fafaf8;
+			--color-grid-line: #d0d0d0;
+			--color-accent: #4a90e2;
+			--color-white: white;
+		}
+
 		* {
 			margin: 0;
 			padding: 0;
@@ -13,7 +21,7 @@
 		}
 
 		body {
-			background: #f5f5f0;
+			background: var(--color-bg-body);
 			display: flex;
 			justify-content: center;
 			align-items: flex-start;
@@ -24,7 +32,7 @@
 		.page {
 			width: 8.5in;
 			height: 11in;
-			background: #fafaf8;
+			background: var(--color-bg-page);
 			position: relative;
 			box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 			transform-origin: top center;
@@ -45,19 +53,19 @@
 			width: 4mm;
 			height: 4mm;
 			box-sizing: border-box;
-			border-right: 1px dashed #d0d0d0;
-			border-bottom: 1px dashed #d0d0d0;
+			border-right: 1px dashed var(--color-grid-line);
+			border-bottom: 1px dashed var(--color-grid-line);
 			margin: 0;
 			padding: 0;
 			display: block;
 		}
 
 		.grid-cell:nth-child(-n+50) {
-			border-top: 1px dashed #d0d0d0;
+			border-top: 1px dashed var(--color-grid-line);
 		}
 
 		.grid-cell:nth-child(50n+1) {
-			border-left: 1px dashed #d0d0d0;
+			border-left: 1px dashed var(--color-grid-line);
 		}
 
 		.image-container {
@@ -66,20 +74,20 @@
 			outline: 2px solid transparent;
 			outline-offset: -2px;
 			transition: outline-color 0.2s;
-			background: #fafaf8;
+			background: var(--color-bg-page);
 		}
 
 		.image-container:hover {
-			outline-color: #4a90e2;
+			outline-color: var(--color-accent);
 		}
 
 		.image-container.dragging {
 			opacity: 0.7;
-			outline-color: #4a90e2;
+			outline-color: var(--color-accent);
 		}
 
 		.image-container.resizing {
-			outline-color: #4a90e2;
+			outline-color: var(--color-accent);
 		}
 
 		body.resizing *,
@@ -97,7 +105,7 @@
 
 		.resize-handle {
 			position: absolute;
-			background: #4a90e2;
+			background: var(--color-accent);
 			opacity: 0;
 			transition: opacity 0.2s;
 		}
@@ -119,7 +127,7 @@
 			left: 0;
 			width: 100%;
 			height: 100%;
-			background: #4a90e2;
+			background: var(--color-accent);
 			border-radius: 50%;
 		}
 
@@ -143,9 +151,12 @@
 			}
 
 			body {
-				background: white;
+				background: var(--color-white);
 				padding: 0;
 				margin: 0;
+				display: block;
+				align-items: initial;
+				justify-content: initial;
 			}
 
 			.page {
@@ -154,19 +165,23 @@
 				box-shadow: none;
 				margin: 0;
 				padding: 0;
-				background: white;
+				background: var(--color-white);
 				transform: none !important;
+				position: relative;
 			}
 
 			.grid {
 				position: absolute;
 				top: calc((11in - 264mm) / 2);
 				left: calc((8.5in - 200mm) / 2);
+				display: grid;
+				grid-template-columns: repeat(50, 4mm);
+				grid-template-rows: repeat(66, 4mm);
 			}
 
 			.grid-cell {
-				border-right: 1px solid #d0d0d0 !important;
-				border-bottom: 1px solid #d0d0d0 !important;
+				border-right: 1px dashed var(--color-grid-line) !important;
+				border-bottom: 1px dashed var(--color-grid-line) !important;
 				box-sizing: border-box !important;
 				width: 4mm !important;
 				height: 4mm !important;
@@ -175,17 +190,17 @@
 			}
 
 			.grid-cell:nth-child(-n+50) {
-				border-top: 1px solid #d0d0d0 !important;
+				border-top: 1px dashed var(--color-grid-line) !important;
 			}
 
 			.grid-cell:nth-child(50n+1) {
-				border-left: 1px solid #d0d0d0 !important;
+				border-left: 1px dashed var(--color-grid-line) !important;
 			}
 
 			.image-container {
 				outline: none !important;
 				position: absolute !important;
-			background: white !important;
+				background: var(--color-white) !important;
 			}
 
 			.image-container img {
