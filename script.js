@@ -279,14 +279,6 @@ function updateImagePosition(img) {
 		// Transform: translate from center (-50%, -50%), scale, rotate, then pan
 		// Pan is applied after rotation so it stays relative to the image's rotated state
 		imgElement.style.transform = `translate(-50%, -50%) scale(${totalScale}) rotate(${img.rotation}deg) translate(${img.panX}px, ${img.panY}px)`;
-
-		// Store transform parameters as CSS variables for print recalculation
-		img.container.style.setProperty('--user-scale', img.userScale);
-		img.container.style.setProperty('--rotation', img.rotation);
-		img.container.style.setProperty('--pan-x', img.panX);
-		img.container.style.setProperty('--pan-y', img.panY);
-		img.container.style.setProperty('--natural-width', img.naturalWidth);
-		img.container.style.setProperty('--natural-height', img.naturalHeight);
 	}
 }
 
@@ -615,63 +607,31 @@ window.addEventListener('resize', () => {
 	});
 });
 
-// Store original transforms before print
-let beforePrintTransforms = [];
+// Adjust image scales for print and restore after
+const PRINT_CELL_SIZE_PX = 4 * 96 / 25.4; // 4mm in pixels at 96 DPI
 
-// Recalculate image transforms for print
 window.addEventListener('beforeprint', () => {
-	const PRINT_CELL_SIZE_MM = 4;
-	const MM_TO_PX_PRINT = 96 / 25.4; // Conversion for print
-	const printCellSizePx = PRINT_CELL_SIZE_MM * MM_TO_PX_PRINT;
-
-	// Store current transforms and container styles
-	beforePrintTransforms = images.map(img => {
-		const imgElement = img.container.querySelector('img');
-		return {
-			container: img.container,
-			transform: imgElement ? imgElement.style.transform : '',
-			left: img.container.style.left,
-			top: img.container.style.top,
-			width: img.container.style.width,
-			height: img.container.style.height
-		};
-	});
-
 	images.forEach(img => {
 		const imgElement = img.container.querySelector('img');
-		if (imgElement && img.naturalWidth > 0 && img.naturalHeight > 0) {
-			// Calculate container size at print (in px)
-			const containerWidth = img.widthCells * printCellSizePx;
-			const containerHeight = img.heightCells * printCellSizePx;
+		if (!imgElement || !img.naturalWidth || !img.naturalHeight) return;
 
-			// Calculate base scale for print
-			const isRotated90or270 = img.rotation % 180 !== 0;
-			const effectiveWidth = isRotated90or270 ? img.naturalHeight : img.naturalWidth;
-			const effectiveHeight = isRotated90or270 ? img.naturalWidth : img.naturalHeight;
+		// Calculate print container size
+		const printWidth = img.widthCells * PRINT_CELL_SIZE_PX;
+		const printHeight = img.heightCells * PRINT_CELL_SIZE_PX;
 
-			const scaleX = containerWidth / effectiveWidth;
-			const scaleY = containerHeight / effectiveHeight;
-			const printBaseScale = Math.max(scaleX, scaleY);
-			const printTotalScale = printBaseScale * img.userScale;
+		// Recalculate base scale for print
+		const isRotated = img.rotation % 180 !== 0;
+		const effectiveW = isRotated ? img.naturalHeight : img.naturalWidth;
+		const effectiveH = isRotated ? img.naturalWidth : img.naturalHeight;
+		const printBaseScale = Math.max(printWidth / effectiveW, printHeight / effectiveH);
 
-			// Apply transform for print
-			imgElement.style.transform = `translate(-50%, -50%) scale(${printTotalScale}) rotate(${img.rotation}deg) translate(${img.panX}px, ${img.panY}px)`;
-		}
+		// Apply print transform
+		const printScale = printBaseScale * img.userScale;
+		imgElement.style.transform = `translate(-50%, -50%) scale(${printScale}) rotate(${img.rotation}deg) translate(${img.panX}px, ${img.panY}px)`;
 	});
 });
 
-// Restore screen transforms after print
 window.addEventListener('afterprint', () => {
-	// Restore the exact transforms and positions from before print
-	beforePrintTransforms.forEach(saved => {
-		const imgElement = saved.container.querySelector('img');
-		if (imgElement) {
-			imgElement.style.transform = saved.transform;
-		}
-		saved.container.style.left = saved.left;
-		saved.container.style.top = saved.top;
-		saved.container.style.width = saved.width;
-		saved.container.style.height = saved.height;
-	});
-	beforePrintTransforms = [];
+	// Just recalculate everything based on current screen size
+	images.forEach(img => updateImagePosition(img));
 });
