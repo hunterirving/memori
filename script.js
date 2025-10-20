@@ -299,25 +299,35 @@ function setupImageHandlers(imageData) {
 
 		// Option-click (or Alt-click on Windows/Linux) to rotate
 		if (e.altKey) {
-			// Rotate 90 degrees clockwise
+			// Check if rotation would cause dimension swap and if it would fit on grid
 			const oldRotation = imageData.rotation;
-			imageData.rotation = (imageData.rotation + 90) % 360;
+			const newRotation = (imageData.rotation + 90) % 360;
+
+			// When rotating between portrait and landscape (90° or 270°), dimensions swap
+			const willSwapDimensions = (oldRotation % 180 === 0 && newRotation % 180 !== 0) ||
+			                           (oldRotation % 180 !== 0 && newRotation % 180 === 0);
+
+			if (willSwapDimensions) {
+				// Check if swapped dimensions would fit on grid at current position
+				const newWidthCells = imageData.heightCells;
+				const newHeightCells = imageData.widthCells;
+
+				// Don't allow rotation if it would exceed grid bounds
+				if (imageData.xCell + newWidthCells > GRID_COLS ||
+				    imageData.yCell + newHeightCells > GRID_ROWS) {
+					return; // Silently ignore the rotation
+				}
+
+				// Swap width and height
+				imageData.widthCells = newWidthCells;
+				imageData.heightCells = newHeightCells;
+			}
+
+			// Rotate 90 degrees clockwise
+			imageData.rotation = newRotation;
 
 			// Don't rotate pan coordinates - they stay in the image's original coordinate system
 			// The CSS transform applies rotation before pan, so pan is relative to the rotated image
-
-			// When rotating between portrait and landscape (90° or 270°), we need to swap dimensions
-			if ((oldRotation % 180 === 0 && imageData.rotation % 180 !== 0) ||
-			    (oldRotation % 180 !== 0 && imageData.rotation % 180 === 0)) {
-				// Swap width and height
-				const temp = imageData.widthCells;
-				imageData.widthCells = imageData.heightCells;
-				imageData.heightCells = temp;
-
-				// Adjust position to keep image within bounds after dimension swap
-				imageData.xCell = Math.max(0, Math.min(GRID_COLS - imageData.widthCells, imageData.xCell));
-				imageData.yCell = Math.max(0, Math.min(GRID_ROWS - imageData.heightCells, imageData.yCell));
-			}
 
 			updateImagePosition(imageData);
 			return;
