@@ -458,15 +458,23 @@ function setupImageHandlers(imageData) {
 			const newUserScale = Math.max(1, Math.min(5, oldUserScale * (1 + zoomDelta)));
 			const newTotalScale = imageData.baseScale * newUserScale;
 
-			// Convert cursor position to pre-scale image space
-			const cursorXInImageSpace = cursorX / oldTotalScale;
-			const cursorYInImageSpace = cursorY / oldTotalScale;
+			// Transform cursor position to account for rotation
+			// The CSS transform applies rotation before pan, so we need to rotate the cursor position
+			// into the image's coordinate system (inverse rotation)
+			const angle = -imageData.rotation * Math.PI / 180; // Negative for inverse rotation
+			const cos = Math.cos(angle);
+			const sin = Math.sin(angle);
+			const rotatedCursorX = cursorX * cos - cursorY * sin;
+			const rotatedCursorY = cursorX * sin + cursorY * cos;
 
-			// Adjust pan to keep the point under cursor fixed during zoom
-			// Pan is in pre-scale image space, so we work entirely in that space
-			const scaleRatio = newTotalScale / oldTotalScale;
-			imageData.panX = cursorXInImageSpace * (1 - scaleRatio) + imageData.panX * scaleRatio;
-			imageData.panY = cursorYInImageSpace * (1 - scaleRatio) + imageData.panY * scaleRatio;
+			// The point under the cursor in pre-scale image space is:
+			// imagePoint = (cursorScreen / oldTotalScale) - panX
+			// We want: (imagePoint + newPanX) * newTotalScale = cursorScreen
+			// So: newPanX = (cursorScreen / newTotalScale) - imagePoint
+			//            = (cursorScreen / newTotalScale) - (cursorScreen / oldTotalScale - panX)
+			//            = cursorScreen * (1/newTotalScale - 1/oldTotalScale) + panX
+			imageData.panX = rotatedCursorX * (1/newTotalScale - 1/oldTotalScale) + imageData.panX;
+			imageData.panY = rotatedCursorY * (1/newTotalScale - 1/oldTotalScale) + imageData.panY;
 			imageData.userScale = newUserScale;
 
 			// Clamp after zooming to prevent whitespace
