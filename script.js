@@ -297,25 +297,21 @@ function setupImageHandlers(imageData) {
 
 		// Detect pinch zoom (ctrlKey is set for pinch gestures on macOS trackpad)
 		if (e.ctrlKey) {
-			// Zoom under cursor
+			// Zoom at cursor position
 			const rect = container.getBoundingClientRect();
-			const mouseX = e.clientX - rect.left;
-			const mouseY = e.clientY - rect.top;
-
-			// Calculate mouse position relative to container center
-			const centerX = rect.width / 2;
-			const centerY = rect.height / 2;
-			const offsetX = mouseX - centerX;
-			const offsetY = mouseY - centerY;
+			const cursorX = e.clientX - rect.left - rect.width / 2;
+			const cursorY = e.clientY - rect.top - rect.height / 2;
 
 			const oldUserScale = imageData.userScale;
+			const oldTotalScale = imageData.baseScale * oldUserScale;
 			const zoomDelta = -e.deltaY * 0.01;
 			const newUserScale = Math.max(1, Math.min(5, oldUserScale * (1 + zoomDelta)));
+			const newTotalScale = imageData.baseScale * newUserScale;
 
-			// Adjust pan to keep point under cursor stationary
-			const scaleFactor = newUserScale / oldUserScale - 1;
-			imageData.panX -= offsetX * scaleFactor;
-			imageData.panY -= offsetY * scaleFactor;
+			// Adjust pan to keep the point under cursor fixed during zoom
+			const scaleRatio = newTotalScale / oldTotalScale;
+			imageData.panX = cursorX * (1 - scaleRatio) + imageData.panX * scaleRatio;
+			imageData.panY = cursorY * (1 - scaleRatio) + imageData.panY * scaleRatio;
 			imageData.userScale = newUserScale;
 
 			// Clamp after zooming to prevent whitespace
