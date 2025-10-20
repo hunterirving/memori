@@ -19,6 +19,7 @@ for (let i = 0; i < GRID_COLS * GRID_ROWS; i++) {
 let images = [];
 let dragState = null;
 let resizeState = null;
+let highestZIndex = 0;
 
 // Prevent default drag behavior on entire document
 document.addEventListener('dragover', (e) => {
@@ -107,7 +108,7 @@ document.addEventListener('drop', async (e) => {
 				xCell = Math.max(0, Math.min(GRID_COLS - widthCells, xCell));
 				yCell = Math.max(0, Math.min(GRID_ROWS - heightCells, yCell));
 
-				addImage(event.target.result, xCell, yCell, widthCells, heightCells, idx + 1);
+				addImage(event.target.result, xCell, yCell, widthCells, heightCells);
 			};
 			img.src = event.target.result;
 		};
@@ -115,12 +116,11 @@ document.addEventListener('drop', async (e) => {
 	});
 });
 
-function addImage(src, xCell, yCell, widthCells, heightCells, zIndex = 0) {
+function addImage(src, xCell, yCell, widthCells, heightCells) {
 	const container = document.createElement('div');
 	container.className = 'image-container';
-	if (zIndex > 0) {
-		container.style.zIndex = zIndex;
-	}
+	highestZIndex++;
+	container.style.zIndex = highestZIndex;
 
 	const wrapper = document.createElement('div');
 	wrapper.className = 'image-wrapper';
@@ -137,6 +137,17 @@ function addImage(src, xCell, yCell, widthCells, heightCells, zIndex = 0) {
 		handle.dataset.direction = dir;
 		container.appendChild(handle);
 	});
+
+	// Add dimension labels
+	const widthLabel = document.createElement('div');
+	widthLabel.className = 'dimension-label width';
+	widthLabel.textContent = widthCells;
+	container.appendChild(widthLabel);
+
+	const heightLabel = document.createElement('div');
+	heightLabel.className = 'dimension-label height';
+	heightLabel.textContent = heightCells;
+	container.appendChild(heightLabel);
 
 	const imageData = {
 		container,
@@ -208,6 +219,12 @@ function updateImagePosition(img) {
 	img.container.style.width = img.widthCells * CELL_SIZE_PX + 'px';
 	img.container.style.height = img.heightCells * CELL_SIZE_PX + 'px';
 
+	// Update dimension labels
+	const widthLabel = img.container.querySelector('.dimension-label.width');
+	const heightLabel = img.container.querySelector('.dimension-label.height');
+	if (widthLabel) widthLabel.textContent = img.widthCells;
+	if (heightLabel) heightLabel.textContent = img.heightCells;
+
 	// Recalculate baseScale if container size changed
 	if (img.naturalWidth > 0 && img.naturalHeight > 0) {
 		const containerWidth = img.widthCells * CELL_SIZE_PX;
@@ -229,8 +246,18 @@ function updateImagePosition(img) {
 	}
 }
 
+function bringToFront(container) {
+	highestZIndex++;
+	container.style.zIndex = highestZIndex;
+}
+
 function setupImageHandlers(imageData) {
 	const container = imageData.container;
+
+	// Bring to front on hover
+	container.addEventListener('mouseenter', () => {
+		bringToFront(container);
+	});
 
 	// Moving / Deleting
 	container.addEventListener('mousedown', (e) => {
