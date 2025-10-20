@@ -2,7 +2,7 @@
 	--color-bg-body: #f5f5f0;
 	--color-bg-page: #fafaf8;
 	--color-grid-line: #d0d0d0;
-	--color-accent: #4a90e2;
+	--color-accent: #79aeea;
 	--color-white: white;
 }
 
@@ -132,7 +132,7 @@ body.dragging * {
 }
 
 .image-container:hover .resize-handle {
-	opacity: 0.8;
+	opacity: 1;
 }
 
 .resize-handle.corner {
