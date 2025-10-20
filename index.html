@@ -244,6 +244,11 @@
 
 			const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
 
+			// Get drop position relative to the grid
+			const gridRect = grid.getBoundingClientRect();
+			const dropX = e.clientX - gridRect.left;
+			const dropY = e.clientY - gridRect.top;
+
 			files.forEach((file, idx) => {
 				const reader = new FileReader();
 				reader.onload = (event) => {
@@ -251,17 +256,29 @@
 					img.onload = () => {
 						const aspectRatio = img.width / img.height;
 
-						// Calculate best fit in grid cells
-						let widthCells = Math.round(Math.sqrt(16 * aspectRatio));
-						let heightCells = Math.round(widthCells / aspectRatio);
+						// Set smaller dimension to 5 cells, calculate larger dimension
+						let widthCells, heightCells;
+						if (aspectRatio >= 1) {
+							// Width is larger or equal
+							heightCells = 5;
+							widthCells = Math.round(heightCells * aspectRatio);
+						} else {
+							// Height is larger
+							widthCells = 5;
+							heightCells = Math.round(widthCells / aspectRatio);
+						}
 
-						// Ensure minimum size
-						widthCells = Math.max(2, widthCells);
-						heightCells = Math.max(2, heightCells);
+						// Clamp to grid boundaries
+						widthCells = Math.min(widthCells, GRID_COLS);
+						heightCells = Math.min(heightCells, GRID_ROWS);
 
-						// Calculate position in grid cells
-						const xCell = 2 + (idx * 2) % 20;
-						const yCell = 2 + Math.floor((idx * 2) / 20) * 2;
+						// Calculate position near drop point
+						let xCell = Math.round(dropX / CELL_SIZE_PX) + (idx * 2);
+						let yCell = Math.round(dropY / CELL_SIZE_PX);
+
+						// Ensure image stays within grid bounds
+						xCell = Math.max(0, Math.min(GRID_COLS - widthCells, xCell));
+						yCell = Math.max(0, Math.min(GRID_ROWS - heightCells, yCell));
 
 						addImage(event.target.result, xCell, yCell, widthCells, heightCells);
 					};
