@@ -1,13 +1,17 @@
-const MM_TO_PX = 96 / 25.4;
-const CELL_SIZE_MM = 4;
-const CELL_SIZE_PX = CELL_SIZE_MM * MM_TO_PX;
-const GRID_OFFSET_IN = 0.25;
-const GRID_OFFSET_PX = GRID_OFFSET_IN * 96;
 const GRID_COLS = 50;
 const GRID_ROWS = 66;
 
 const grid = document.getElementById('grid');
 const page = document.querySelector('.page');
+
+// Calculate cell size dynamically based on actual grid dimensions
+function getCellSize() {
+	const gridRect = grid.getBoundingClientRect();
+	return {
+		width: gridRect.width / GRID_COLS,
+		height: gridRect.height / GRID_ROWS
+	};
+}
 
 // Create grid cells
 for (let i = 0; i < GRID_COLS * GRID_ROWS; i++) {
@@ -36,14 +40,13 @@ document.addEventListener('drop', async (e) => {
 
 	// Get drop position relative to the grid
 	const gridRect = grid.getBoundingClientRect();
-	const gridWidth = GRID_COLS * CELL_SIZE_PX;
-	const gridHeight = GRID_ROWS * CELL_SIZE_PX;
+	const cellSize = getCellSize();
 
 	// Clamp drop position to grid boundaries
 	let dropX = e.clientX - gridRect.left;
 	let dropY = e.clientY - gridRect.top;
-	dropX = Math.max(0, Math.min(gridWidth, dropX));
-	dropY = Math.max(0, Math.min(gridHeight, dropY));
+	dropX = Math.max(0, Math.min(gridRect.width, dropX));
+	dropY = Math.max(0, Math.min(gridRect.height, dropY));
 
 	// Load first image to get base dimensions
 	let firstImageDimensions = null;
@@ -101,8 +104,8 @@ document.addEventListener('drop', async (e) => {
 				heightCells = Math.min(heightCells, GRID_ROWS);
 
 				// Calculate position with first image's center under drop point
-				let xCell = Math.round(dropX / CELL_SIZE_PX - firstImageDimensions.widthCells / 2) + (idx * 2);
-				let yCell = Math.round(dropY / CELL_SIZE_PX - firstImageDimensions.heightCells / 2);
+				let xCell = Math.round(dropX / cellSize.width - firstImageDimensions.widthCells / 2) + (idx * 2);
+				let yCell = Math.round(dropY / cellSize.height - firstImageDimensions.heightCells / 2);
 
 				// Ensure image stays within grid bounds
 				xCell = Math.max(0, Math.min(GRID_COLS - widthCells, xCell));
@@ -172,8 +175,9 @@ function addImage(src, xCell, yCell, widthCells, heightCells) {
 		imageData.naturalHeight = img.naturalHeight;
 
 		// Calculate base scale to cover container (mimics object-fit: cover)
-		const containerWidth = imageData.widthCells * CELL_SIZE_PX;
-		const containerHeight = imageData.heightCells * CELL_SIZE_PX;
+		const cellSize = getCellSize();
+		const containerWidth = imageData.widthCells * cellSize.width;
+		const containerHeight = imageData.heightCells * cellSize.height;
 		const scaleX = containerWidth / img.naturalWidth;
 		const scaleY = containerHeight / img.naturalHeight;
 		imageData.baseScale = Math.max(scaleX, scaleY);
@@ -192,8 +196,9 @@ function addImage(src, xCell, yCell, widthCells, heightCells) {
 
 function calculatePanBounds(imageData) {
 	// Container dimensions in the current (possibly swapped) grid orientation
-	const containerWidth = imageData.widthCells * CELL_SIZE_PX;
-	const containerHeight = imageData.heightCells * CELL_SIZE_PX;
+	const cellSize = getCellSize();
+	const containerWidth = imageData.widthCells * cellSize.width;
+	const containerHeight = imageData.heightCells * cellSize.height;
 
 	if (imageData.naturalWidth === 0 || imageData.naturalHeight === 0) {
 		return { maxPanX: 0, maxPanY: 0 };
@@ -231,10 +236,17 @@ function clampPan(imageData) {
 }
 
 function updateImagePosition(img) {
-	img.container.style.left = img.xCell * CELL_SIZE_PX + 'px';
-	img.container.style.top = img.yCell * CELL_SIZE_PX + 'px';
-	img.container.style.width = img.widthCells * CELL_SIZE_PX + 'px';
-	img.container.style.height = img.heightCells * CELL_SIZE_PX + 'px';
+	const cellSize = getCellSize();
+	img.container.style.left = img.xCell * cellSize.width + 'px';
+	img.container.style.top = img.yCell * cellSize.height + 'px';
+	img.container.style.width = img.widthCells * cellSize.width + 'px';
+	img.container.style.height = img.heightCells * cellSize.height + 'px';
+
+	// Store cell positions as CSS variables for print styles
+	img.container.style.setProperty('--x-cell', img.xCell);
+	img.container.style.setProperty('--y-cell', img.yCell);
+	img.container.style.setProperty('--width-cells', img.widthCells);
+	img.container.style.setProperty('--height-cells', img.heightCells);
 
 	// Update dimension labels
 	const widthLabel = img.container.querySelector('.dimension-label.width');
@@ -244,8 +256,8 @@ function updateImagePosition(img) {
 
 	// Recalculate baseScale if container size changed
 	if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-		const containerWidth = img.widthCells * CELL_SIZE_PX;
-		const containerHeight = img.heightCells * CELL_SIZE_PX;
+		const containerWidth = img.widthCells * cellSize.width;
+		const containerHeight = img.heightCells * cellSize.height;
 
 		// When rotated 90° or 270°, the image dimensions are effectively swapped
 		const isRotated90or270 = img.rotation % 180 !== 0;
@@ -267,6 +279,14 @@ function updateImagePosition(img) {
 		// Transform: translate from center (-50%, -50%), scale, rotate, then pan
 		// Pan is applied after rotation so it stays relative to the image's rotated state
 		imgElement.style.transform = `translate(-50%, -50%) scale(${totalScale}) rotate(${img.rotation}deg) translate(${img.panX}px, ${img.panY}px)`;
+
+		// Store transform parameters as CSS variables for print recalculation
+		img.container.style.setProperty('--user-scale', img.userScale);
+		img.container.style.setProperty('--rotation', img.rotation);
+		img.container.style.setProperty('--pan-x', img.panX);
+		img.container.style.setProperty('--pan-y', img.panY);
+		img.container.style.setProperty('--natural-width', img.naturalWidth);
+		img.container.style.setProperty('--natural-height', img.naturalHeight);
 	}
 }
 
@@ -508,8 +528,9 @@ document.addEventListener('mousemove', (e) => {
 		const dx = e.clientX - dragState.startX;
 		const dy = e.clientY - dragState.startY;
 
-		const dxCells = Math.round(dx / CELL_SIZE_PX);
-		const dyCells = Math.round(dy / CELL_SIZE_PX);
+		const cellSize = getCellSize();
+		const dxCells = Math.round(dx / cellSize.width);
+		const dyCells = Math.round(dy / cellSize.height);
 
 		const newXCell = Math.max(0, Math.min(GRID_COLS - dragState.image.widthCells, dragState.startXCell + dxCells));
 		const newYCell = Math.max(0, Math.min(GRID_ROWS - dragState.image.heightCells, dragState.startYCell + dyCells));
@@ -523,8 +544,9 @@ document.addEventListener('mousemove', (e) => {
 		const dx = e.clientX - resizeState.startX;
 		const dy = e.clientY - resizeState.startY;
 
-		const dxCells = Math.round(dx / CELL_SIZE_PX);
-		const dyCells = Math.round(dy / CELL_SIZE_PX);
+		const cellSize = getCellSize();
+		const dxCells = Math.round(dx / cellSize.width);
+		const dyCells = Math.round(dy / cellSize.height);
 
 		const dir = resizeState.direction;
 		const img = resizeState.image;
@@ -584,4 +606,72 @@ document.addEventListener('mouseup', () => {
 		document.body.style.cursor = '';
 		document.body.classList.remove('resizing');
 	}
+});
+
+// Update all image positions when window resizes (for responsive scaling)
+window.addEventListener('resize', () => {
+	images.forEach(img => {
+		updateImagePosition(img);
+	});
+});
+
+// Store original transforms before print
+let beforePrintTransforms = [];
+
+// Recalculate image transforms for print
+window.addEventListener('beforeprint', () => {
+	const PRINT_CELL_SIZE_MM = 4;
+	const MM_TO_PX_PRINT = 96 / 25.4; // Conversion for print
+	const printCellSizePx = PRINT_CELL_SIZE_MM * MM_TO_PX_PRINT;
+
+	// Store current transforms and container styles
+	beforePrintTransforms = images.map(img => {
+		const imgElement = img.container.querySelector('img');
+		return {
+			container: img.container,
+			transform: imgElement ? imgElement.style.transform : '',
+			left: img.container.style.left,
+			top: img.container.style.top,
+			width: img.container.style.width,
+			height: img.container.style.height
+		};
+	});
+
+	images.forEach(img => {
+		const imgElement = img.container.querySelector('img');
+		if (imgElement && img.naturalWidth > 0 && img.naturalHeight > 0) {
+			// Calculate container size at print (in px)
+			const containerWidth = img.widthCells * printCellSizePx;
+			const containerHeight = img.heightCells * printCellSizePx;
+
+			// Calculate base scale for print
+			const isRotated90or270 = img.rotation % 180 !== 0;
+			const effectiveWidth = isRotated90or270 ? img.naturalHeight : img.naturalWidth;
+			const effectiveHeight = isRotated90or270 ? img.naturalWidth : img.naturalHeight;
+
+			const scaleX = containerWidth / effectiveWidth;
+			const scaleY = containerHeight / effectiveHeight;
+			const printBaseScale = Math.max(scaleX, scaleY);
+			const printTotalScale = printBaseScale * img.userScale;
+
+			// Apply transform for print
+			imgElement.style.transform = `translate(-50%, -50%) scale(${printTotalScale}) rotate(${img.rotation}deg) translate(${img.panX}px, ${img.panY}px)`;
+		}
+	});
+});
+
+// Restore screen transforms after print
+window.addEventListener('afterprint', () => {
+	// Restore the exact transforms and positions from before print
+	beforePrintTransforms.forEach(saved => {
+		const imgElement = saved.container.querySelector('img');
+		if (imgElement) {
+			imgElement.style.transform = saved.transform;
+		}
+		saved.container.style.left = saved.left;
+		saved.container.style.top = saved.top;
+		saved.container.style.width = saved.width;
+		saved.container.style.height = saved.height;
+	});
+	beforePrintTransforms = [];
 });

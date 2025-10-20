@@ -5,6 +5,17 @@
 	--color-accent: #79aeea;
 	--color-white: white;
 	--shadow: #00000044;
+
+	/* Grid configuration */
+	--grid-cols: 50;
+	--grid-rows: 66;
+	--cell-size-mm: 4mm; /* Cell size for print */
+
+	/* Page dimensions: 8.5in = 216mm, 11in = 279.4mm */
+	/* Grid dimensions at print: 200mm x 264mm */
+	/* Grid as percentage of page: 200/216 = 92.59%, 264/279.4 = 94.48% */
+	--grid-width-percent: 92.59%;
+	--grid-height-percent: 94.48%;
 }
 
 * {
@@ -20,31 +31,39 @@ body {
 	align-items: flex-start;
 	min-height: 100vh;
 	padding: 20px;
+	overflow-x: hidden;
 }
 
 .page {
-	width: 8.5in;
-	height: 11in;
+	/* Scale down on narrow screens, but never larger than 8.5in */
+	max-width: min(8.5in, calc(100vw - 40px));
+	width: 100%;
+	/* Maintain 8.5:11 aspect ratio (11/8.5 = 1.294117647) */
+	aspect-ratio: 8.5 / 11;
 	background: var(--color-bg-page);
 	position: relative;
 	box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-	transform-origin: top center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .grid {
-	position: absolute;
-	top: calc((11in - 264mm) / 2);
-	left: calc((8.5in - 200mm) / 2);
+	/* Grid dimensions as percentage of page to scale responsively */
+	width: var(--grid-width-percent);
+	height: var(--grid-height-percent);
 	display: grid;
-	grid-template-columns: repeat(50, 4mm);
-	grid-template-rows: repeat(66, 4mm);
+	grid-template-columns: repeat(var(--grid-cols), 1fr);
+	grid-template-rows: repeat(var(--grid-rows), 1fr);
 	gap: 0;
 	line-height: 0;
+	position: relative; /* Image containers are positioned relative to grid */
+	/* Grid is centered within .page by the parent's flexbox */
 }
 
 .grid-cell {
-	width: 4mm;
-	height: 4mm;
+	width: 100%;
+	height: 100%;
 	box-sizing: border-box;
 	border-right: 1px dashed var(--color-grid-line);
 	border-bottom: 1px dashed var(--color-grid-line);
@@ -224,31 +243,34 @@ body.dragging * {
 	}
 
 	.page {
-		width: 8.5in;
-		height: 11in;
+		width: 8.5in !important;
+		max-width: 8.5in !important;
+		height: 11in !important;
 		box-shadow: none;
 		margin: 0;
 		padding: 0;
 		background: var(--color-white);
-		transform: none !important;
-		position: relative;
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
 	}
 
 	.grid {
-		position: absolute;
-		top: calc((11in - 264mm) / 2);
-		left: calc((8.5in - 200mm) / 2);
+		/* Use fixed dimensions for print: 50 cells * 4mm = 200mm, 66 cells * 4mm = 264mm */
+		width: 200mm !important;
+		height: 264mm !important;
 		display: grid;
-		grid-template-columns: repeat(50, 4mm);
-		grid-template-rows: repeat(66, 4mm);
+		grid-template-columns: repeat(var(--grid-cols), 1fr) !important;
+		grid-template-rows: repeat(var(--grid-rows), 1fr) !important;
+		position: relative !important;
 	}
 
 	.grid-cell {
 		border-right: 1px dashed var(--color-grid-line) !important;
 		border-bottom: 1px dashed var(--color-grid-line) !important;
 		box-sizing: border-box !important;
-		width: 4mm !important;
-		height: 4mm !important;
+		width: 100% !important;
+		height: 100% !important;
 		margin: 0 !important;
 		padding: 0 !important;
 	}
@@ -265,6 +287,11 @@ body.dragging * {
 		outline: none !important;
 		position: absolute !important;
 		background: var(--color-white) !important;
+		/* Recalculate positions using cell coordinates and print cell size */
+		left: calc(var(--x-cell) * var(--cell-size-mm)) !important;
+		top: calc(var(--y-cell) * var(--cell-size-mm)) !important;
+		width: calc(var(--width-cells) * var(--cell-size-mm)) !important;
+		height: calc(var(--height-cells) * var(--cell-size-mm)) !important;
 	}
 
 	.image-container .image-wrapper {
