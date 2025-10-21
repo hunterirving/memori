@@ -1,10 +1,46 @@
+/* Named color palette and default theme */
 :root {
-	--color-bg-body: #f5f5f0;
-	--color-bg-page: #fafaf8;
-	--color-grid-line: #d0d0d0;
-	--color-accent: #79aeea;
-	--color-white: white;
+	/* Default colors */
+	--white: white;
+	--black: black;
+	--default-grid: #d0d0d0;
 	--shadow: #00000044;
+
+	/* guac theme colors */
+	--onion: #a81d8f;
+	--garlic: #fefef4;
+	--lime: #a9cf51;
+	--avocado: #7a8520;
+
+	/* toast theme colors */
+	--butter: #ffe598;
+	--cream: #fffef9;
+	--crumb: #decca3;
+	--peanut-butter: #be852a;
+
+	/* mojito theme colors */
+	--mint: #9febaa;
+	--soda: #f8fffe;
+	--zest: #9ee3ad;
+	--watermelon: #f8599b;
+
+	/* grape-soda theme colors */
+	--natural-flavors: #d4c5f9;
+	--effervescence: #f9f7ff;
+	--concentrate: #b8a9dd;
+	--syrup: #7c5cbe;
+
+	/* coral theme colors */
+	--reef: #ff9b87;
+	--pearl: #fff8f6;
+	--sand: #f0bcb3;
+	--anemone: #ff6b51;
+
+	/* sea-breeze theme colors */
+	--cerulean: #a3d5ff;
+	--mist: #f7fcff;
+	--horizon: #85c0f5;
+	--lagoon: #2196f3;
 
 	/* Grid configuration */
 	--grid-cols: 50;
@@ -16,6 +52,58 @@
 	/* Grid as percentage of page: 200/216 = 92.59%, 264/279.4 = 94.48% */
 	--grid-width-percent: 92.59%;
 	--grid-height-percent: 94.48%;
+
+	/* Default theme (sea-breeze) */
+	--desk: var(--cerulean);
+	--page: var(--mist);
+	--grid-line: var(--horizon);
+	--accent: var(--lagoon);
+
+	/* Set text color for all themes */
+	color: var(--white);
+}
+
+/* Theme definitions */
+:root[data-theme="guac"] {
+	--desk: var(--avocado);
+	--page: var(--garlic);
+	--grid-line: var(--lime);
+	--accent: var(--onion);
+}
+
+:root[data-theme="toast"] {
+	--desk: var(--butter);
+	--page: var(--cream);
+	--grid-line: var(--crumb);
+	--accent: var(--peanut-butter);
+}
+
+:root[data-theme="mojito"] {
+	--desk: var(--mint);
+	--page: var(--soda);
+	--grid-line: var(--zest);
+	--accent: var(--watermelon);
+}
+
+:root[data-theme="grape-soda"] {
+	--desk: var(--natural-flavors);
+	--page: var(--effervescence);
+	--grid-line: var(--concentrate);
+	--accent: var(--syrup);
+}
+
+:root[data-theme="coral"] {
+	--desk: var(--reef);
+	--page: var(--pearl);
+	--grid-line: var(--sand);
+	--accent: var(--anemone);
+}
+
+:root[data-theme="sea-breeze"] {
+	--desk: var(--cerulean);
+	--page: var(--mist);
+	--grid-line: var(--horizon);
+	--accent: var(--lagoon);
 }
 
 * {
@@ -25,7 +113,7 @@
 }
 
 body {
-	background: var(--color-bg-body);
+	background: var(--desk);
 	display: flex;
 	justify-content: center;
 	align-items: flex-start;
@@ -40,9 +128,9 @@ body {
 	width: 100%;
 	/* Maintain 8.5:11 aspect ratio (11/8.5 = 1.294117647) */
 	aspect-ratio: 8.5 / 11;
-	background: var(--color-bg-page);
+	background: var(--page);
 	position: relative;
-	box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+	box-shadow: 0 8px 24px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -65,19 +153,19 @@ body {
 	width: 100%;
 	height: 100%;
 	box-sizing: border-box;
-	border-right: 1px dashed var(--color-grid-line);
-	border-bottom: 1px dashed var(--color-grid-line);
+	border-right: 1px dashed var(--grid-line);
+	border-bottom: 1px dashed var(--grid-line);
 	margin: 0;
 	padding: 0;
 	display: block;
 }
 
 .grid-cell:nth-child(-n+50) {
-	border-top: 1px dashed var(--color-grid-line);
+	border-top: 1px dashed var(--grid-line);
 }
 
 .grid-cell:nth-child(50n+1) {
-	border-left: 1px dashed var(--color-grid-line);
+	border-left: 1px dashed var(--grid-line);
 }
 
 .image-container {
@@ -86,7 +174,7 @@ body {
 	outline: 2px solid transparent;
 	outline-offset: -2px;
 	transition: outline-color 0.2s;
-	background: var(--color-bg-page);
+	background: var(--page);
 }
 
 .image-container::after {
@@ -113,7 +201,7 @@ body {
 }
 
 .image-container:hover::after {
-	border-color: var(--color-accent);
+	border-color: var(--accent);
 }
 
 .image-container.dragging {
@@ -121,11 +209,11 @@ body {
 }
 
 .image-container.dragging::after {
-	border-color: var(--color-accent);
+	border-color: var(--accent);
 }
 
 .image-container.resizing::after {
-	border-color: var(--color-accent);
+	border-color: var(--accent);
 }
 
 body.resizing *,
@@ -145,7 +233,7 @@ body.dragging * {
 
 .resize-handle {
 	position: absolute;
-	background: var(--color-accent);
+	background: var(--accent);
 	opacity: 0;
 	transition: opacity 0.2s;
 	z-index: 2;
@@ -157,14 +245,13 @@ body.dragging * {
 
 .dimension-label {
 	position: absolute;
-	background: var(--color-accent);
-	color: var(--color-white);
+	background: var(--accent);
+	color: var(--text);
 	padding: 4px 10px;
 	border-radius: 12px;
 	font-size: 16px;
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 	font-weight: 500;
-	text-shadow: 1px 1px 1px var(--shadow);
 	line-height: 1;
 	opacity: 0;
 	transition: opacity 0.2s;
@@ -202,7 +289,7 @@ body.dragging * {
 	position: absolute;
 	width: 10px;
 	height: 10px;
-	background: var(--color-accent);
+	background: var(--accent);
 	border-radius: 50%;
 }
 
@@ -234,7 +321,7 @@ body.dragging * {
 	}
 
 	body {
-		background: var(--color-white);
+		background: var(--white);
 		padding: 0;
 		margin: 0;
 		display: block;
@@ -249,7 +336,7 @@ body.dragging * {
 		box-shadow: none;
 		margin: 0;
 		padding: 0;
-		background: var(--color-white);
+		background: var(--white);
 		display: flex !important;
 		align-items: center !important;
 		justify-content: center !important;
@@ -266,8 +353,8 @@ body.dragging * {
 	}
 
 	.grid-cell {
-		border-right: 1px dashed var(--color-grid-line) !important;
-		border-bottom: 1px dashed var(--color-grid-line) !important;
+		border-right: 1px dashed var(--default-grid) !important;
+		border-bottom: 1px dashed var(--default-grid) !important;
 		box-sizing: border-box !important;
 		width: 100% !important;
 		height: 100% !important;
@@ -276,17 +363,17 @@ body.dragging * {
 	}
 
 	.grid-cell:nth-child(-n+50) {
-		border-top: 1px dashed var(--color-grid-line) !important;
+		border-top: 1px dashed var(--default-grid) !important;
 	}
 
 	.grid-cell:nth-child(50n+1) {
-		border-left: 1px dashed var(--color-grid-line) !important;
+		border-left: 1px dashed var(--default-grid) !important;
 	}
 
 	.image-container {
 		outline: none !important;
 		position: absolute !important;
-		background: var(--color-white) !important;
+		background: var(--white) !important;
 		/* Recalculate positions using cell coordinates and print cell size */
 		left: calc(var(--x-cell) * var(--cell-size-mm)) !important;
 		top: calc(var(--y-cell) * var(--cell-size-mm)) !important;
