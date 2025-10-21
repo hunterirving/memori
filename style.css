@@ -278,6 +278,10 @@ body.dragging * {
 	opacity: 1;
 }
 
+.dimension-label[data-hidden="true"] {
+	opacity: 0 !important;
+}
+
 .resize-handle.corner {
 	width: 10px;
 	height: 10px;

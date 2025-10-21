@@ -251,8 +251,20 @@ function updateImagePosition(img) {
 	// Update dimension labels
 	const widthLabel = img.container.querySelector('.dimension-label.width');
 	const heightLabel = img.container.querySelector('.dimension-label.height');
-	if (widthLabel) widthLabel.textContent = img.widthCells;
-	if (heightLabel) heightLabel.textContent = img.heightCells;
+	if (widthLabel) {
+		// Only update text if dimension is >= 5
+		if (img.widthCells >= 5) {
+			widthLabel.textContent = img.widthCells;
+		}
+		widthLabel.dataset.hidden = img.widthCells < 5 ? 'true' : 'false';
+	}
+	if (heightLabel) {
+		// Only update text if dimension is >= 5
+		if (img.heightCells >= 5) {
+			heightLabel.textContent = img.heightCells;
+		}
+		heightLabel.dataset.hidden = img.heightCells < 5 ? 'true' : 'false';
+	}
 
 	// Recalculate baseScale if container size changed
 	if (img.naturalWidth > 0 && img.naturalHeight > 0) {
