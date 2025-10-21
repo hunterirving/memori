@@ -702,3 +702,12 @@ document.addEventListener('keyup', (e) => {
 
 // Load theme on page load
 loadThemeFromLocalStorage();
+
+// Warn before leaving page if images are present
+window.addEventListener('beforeunload', (e) => {
+	if (images.length > 0) {
+		e.preventDefault();
+		e.returnValue = '';
+		return '';
+	}
+});
