@@ -111,6 +111,7 @@
 	padding: 0;
 	box-sizing: border-box;
 	user-select: none;
+	scrollbar-color: var(--page) var(--desk);
 }
 
 body {
