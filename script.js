@@ -632,6 +632,10 @@ window.addEventListener('beforeprint', () => {
 });
 
 window.addEventListener('afterprint', () => {
-	// Just recalculate everything based on current screen size
-	images.forEach(img => updateImagePosition(img));
+	// Wait for layout to settle after exiting print mode
+	requestAnimationFrame(() => {
+		requestAnimationFrame(() => {
+			images.forEach(img => updateImagePosition(img));
+		});
+	});
 });
