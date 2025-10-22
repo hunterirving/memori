@@ -199,6 +199,7 @@ body {
 	outline-offset: -2px;
 	transition: outline-color 0.2s;
 	background: var(--page);
+	touch-action: none;
 }
 
 .image-container::after {

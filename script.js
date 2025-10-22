@@ -24,6 +24,8 @@ let images = [];
 let dragState = null;
 let resizeState = null;
 let highestZIndex = 0;
+let touchState = null; // For tracking multi-touch gestures
+let longPressTimer = null; // For detecting long press to enable pan mode
 
 // Helper function to calculate image dimensions from aspect ratio
 function calculateImageDimensions(aspectRatio) {
@@ -323,6 +325,192 @@ function setupImageHandlers(imageData) {
 		bringToFront(container);
 	});
 
+	// Unified pointer start handler
+	function handlePointerStart(clientX, clientY, isTouch = false) {
+		// Clear any existing timers from other images
+		if (longPressTimer) {
+			clearTimeout(longPressTimer);
+			longPressTimer = null;
+		}
+
+		// Lock cursor to move during drag operation
+		document.body.style.cursor = 'move';
+		document.body.classList.add('dragging');
+
+		dragState = {
+			image: imageData,
+			startX: clientX,
+			startY: clientY,
+			startXCell: imageData.xCell,
+			startYCell: imageData.yCell,
+			isPanMode: false, // Will be set to true after long press
+			isTouch: isTouch
+		};
+
+		container.classList.add('dragging');
+
+		// For touch, set up long press timer to enable pan mode
+		if (isTouch) {
+			longPressTimer = setTimeout(() => {
+				if (dragState && dragState.image === imageData &&
+				    dragState.startXCell === imageData.xCell &&
+				    dragState.startYCell === imageData.yCell) {
+					// User held for 0.5 seconds without moving to a new cell - enable pan mode
+					dragState.isPanMode = true;
+					dragState.initialPanX = imageData.panX;
+					dragState.initialPanY = imageData.panY;
+				}
+			}, 500);
+		}
+	}
+
+	// Touch event handlers for mobile
+	container.addEventListener('touchstart', (e) => {
+		if (e.target.classList.contains('resize-handle')) return;
+
+		// Bring to front on touch
+		bringToFront(container);
+
+		if (e.touches.length === 1) {
+			// Single touch - start drag (or long press for pan)
+			e.preventDefault();
+			const touch = e.touches[0];
+			handlePointerStart(touch.clientX, touch.clientY, true);
+		} else if (e.touches.length === 2) {
+			// Two fingers - prepare for pinch/pan
+			e.preventDefault();
+
+			// Cancel any ongoing drag and long press timer
+			if (longPressTimer) {
+				clearTimeout(longPressTimer);
+				longPressTimer = null;
+			}
+			if (dragState) {
+				dragState.image.container.classList.remove('dragging');
+				dragState = null;
+				document.body.style.cursor = '';
+				document.body.classList.remove('dragging');
+			}
+
+			const touch1 = e.touches[0];
+			const touch2 = e.touches[1];
+
+			// Calculate initial distance for pinch detection
+			const dx = touch2.clientX - touch1.clientX;
+			const dy = touch2.clientY - touch1.clientY;
+			const distance = Math.sqrt(dx * dx + dy * dy);
+
+			// Calculate center point
+			const centerX = (touch1.clientX + touch2.clientX) / 2;
+			const centerY = (touch1.clientY + touch2.clientY) / 2;
+
+			touchState = {
+				image: imageData,
+				initialDistance: distance,
+				lastDistance: distance,
+				initialScale: imageData.userScale,
+				lastCenterX: centerX,
+				lastCenterY: centerY,
+				lastPanX: imageData.panX,
+				lastPanY: imageData.panY
+			};
+		}
+	}, { passive: false });
+
+	container.addEventListener('touchmove', (e) => {
+		if (e.touches.length === 2 && touchState && touchState.image === imageData) {
+			// Two finger pinch/pan
+			e.preventDefault();
+
+			const touch1 = e.touches[0];
+			const touch2 = e.touches[1];
+
+			// Calculate current distance
+			const dx = touch2.clientX - touch1.clientX;
+			const dy = touch2.clientY - touch1.clientY;
+			const distance = Math.sqrt(dx * dx + dy * dy);
+
+			// Calculate center point
+			const centerX = (touch1.clientX + touch2.clientX) / 2;
+			const centerY = (touch1.clientY + touch2.clientY) / 2;
+
+			// Detect if this is primarily a pinch or a pan
+			const distanceChange = Math.abs(distance - touchState.lastDistance);
+			const centerMoveX = centerX - touchState.lastCenterX;
+			const centerMoveY = centerY - touchState.lastCenterY;
+			const centerMovement = Math.sqrt(centerMoveX * centerMoveX + centerMoveY * centerMoveY);
+
+			// If distance changed significantly more than center moved, treat as pinch
+			if (distanceChange > centerMovement * 0.5) {
+				// Pinch zoom
+				const rect = container.getBoundingClientRect();
+				const cursorX = centerX - rect.left - rect.width / 2;
+				const cursorY = centerY - rect.top - rect.height / 2;
+
+				const oldUserScale = imageData.userScale;
+				const oldTotalScale = imageData.baseScale * oldUserScale;
+				const scaleFactor = distance / touchState.initialDistance;
+				const newUserScale = Math.max(1, Math.min(5, touchState.initialScale * scaleFactor));
+				const newTotalScale = imageData.baseScale * newUserScale;
+
+				// Transform cursor position to account for rotation
+				const angle = -imageData.rotation * Math.PI / 180;
+				const cos = Math.cos(angle);
+				const sin = Math.sin(angle);
+				const rotatedCursorX = cursorX * cos - cursorY * sin;
+				const rotatedCursorY = cursorX * sin + cursorY * cos;
+
+				// Calculate new pan to keep zoom centered on pinch point
+				imageData.panX = rotatedCursorX * (1/newTotalScale - 1/oldTotalScale) + touchState.lastPanX;
+				imageData.panY = rotatedCursorY * (1/newTotalScale - 1/oldTotalScale) + touchState.lastPanY;
+				imageData.userScale = newUserScale;
+
+				clampPan(imageData);
+				touchState.lastPanX = imageData.panX;
+				touchState.lastPanY = imageData.panY;
+			} else {
+				// Two-finger pan
+				const deltaX = centerMoveX;
+				const deltaY = centerMoveY;
+
+				// Transform deltas to account for image rotation
+				const angle = -imageData.rotation * Math.PI / 180;
+				const cos = Math.cos(angle);
+				const sin = Math.sin(angle);
+				const rotatedDeltaX = deltaX * cos - deltaY * sin;
+				const rotatedDeltaY = deltaX * sin + deltaY * cos;
+
+				// Convert screen-space delta to pre-scale image space
+				// Note: positive delta means moving fingers right/down, which should move image right/down
+				const totalScale = imageData.baseScale * imageData.userScale;
+				imageData.panX = touchState.lastPanX + rotatedDeltaX / totalScale;
+				imageData.panY = touchState.lastPanY + rotatedDeltaY / totalScale;
+
+				clampPan(imageData);
+				touchState.lastPanX = imageData.panX;
+				touchState.lastPanY = imageData.panY;
+			}
+
+			touchState.lastDistance = distance;
+			touchState.lastCenterX = centerX;
+			touchState.lastCenterY = centerY;
+
+			updateImagePosition(imageData);
+		}
+	}, { passive: false });
+
+	container.addEventListener('touchend', () => {
+		if (touchState && touchState.image === imageData) {
+			touchState = null;
+		}
+	}, { passive: false });
+
+	container.addEventListener('touchcancel', () => {
+		if (touchState && touchState.image === imageData) {
+			touchState = null;
+		}
+	}, { passive: false });
+
 	// Moving / Deleting / Duplicating
 	container.addEventListener('mousedown', (e) => {
 		if (e.target.classList.contains('resize-handle')) return;
@@ -431,18 +619,7 @@ function setupImageHandlers(imageData) {
 			return;
 		}
 
-		// Lock cursor to move during drag operation
-		document.body.style.cursor = 'move';
-		document.body.classList.add('dragging');
-
-		dragState = {
-			image: imageData,
-			startX: e.clientX,
-			startY: e.clientY,
-			startXCell: imageData.xCell,
-			startYCell: imageData.yCell
-		};
-		container.classList.add('dragging');
+		handlePointerStart(e.clientX, e.clientY);
 	});
 
 	// Resizing
@@ -468,6 +645,27 @@ function setupImageHandlers(imageData) {
 			};
 			container.classList.add('resizing');
 		});
+
+		// Touch support for resize handles
+		handle.addEventListener('touchstart', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+
+			const touch = e.touches[0];
+			document.body.classList.add('resizing');
+
+			resizeState = {
+				image: imageData,
+				direction: handle.dataset.direction,
+				startX: touch.clientX,
+				startY: touch.clientY,
+				startXCell: imageData.xCell,
+				startYCell: imageData.yCell,
+				startWidthCells: imageData.widthCells,
+				startHeightCells: imageData.heightCells
+			};
+			container.classList.add('resizing');
+		}, { passive: false });
 	});
 
 	// Pan and Zoom with wheel events (macOS trackpad gestures)
@@ -536,26 +734,54 @@ function setupImageHandlers(imageData) {
 	}, { passive: false });
 }
 
-document.addEventListener('mousemove', (e) => {
+function handleMove(clientX, clientY) {
 	if (dragState) {
-		const dx = e.clientX - dragState.startX;
-		const dy = e.clientY - dragState.startY;
+		const dx = clientX - dragState.startX;
+		const dy = clientY - dragState.startY;
 
-		const cellSize = getCellSize();
-		const dxCells = Math.round(dx / cellSize.width);
-		const dyCells = Math.round(dy / cellSize.height);
+		if (dragState.isPanMode) {
+			// Pan mode - move the image within its container
+			const imageData = dragState.image;
 
-		const newXCell = Math.max(0, Math.min(GRID_COLS - dragState.image.widthCells, dragState.startXCell + dxCells));
-		const newYCell = Math.max(0, Math.min(GRID_ROWS - dragState.image.heightCells, dragState.startYCell + dyCells));
+			// Transform deltas to account for image rotation
+			const angle = -imageData.rotation * Math.PI / 180;
+			const cos = Math.cos(angle);
+			const sin = Math.sin(angle);
+			const rotatedDeltaX = dx * cos - dy * sin;
+			const rotatedDeltaY = dx * sin + dy * cos;
 
-		dragState.image.xCell = newXCell;
-		dragState.image.yCell = newYCell;
-		updateImagePosition(dragState.image);
+			// Convert screen-space delta to pre-scale image space
+			const totalScale = imageData.baseScale * imageData.userScale;
+			imageData.panX = dragState.initialPanX + rotatedDeltaX / totalScale;
+			imageData.panY = dragState.initialPanY + rotatedDeltaY / totalScale;
+
+			clampPan(imageData);
+			updateImagePosition(imageData);
+		} else {
+			// Normal drag mode - move the image container on the grid
+			const cellSize = getCellSize();
+			const dxCells = Math.round(dx / cellSize.width);
+			const dyCells = Math.round(dy / cellSize.height);
+
+			const newXCell = Math.max(0, Math.min(GRID_COLS - dragState.image.widthCells, dragState.startXCell + dxCells));
+			const newYCell = Math.max(0, Math.min(GRID_ROWS - dragState.image.heightCells, dragState.startYCell + dyCells));
+
+			// If the image moved to a new cell, cancel the long press timer
+			if (dragState.isTouch && longPressTimer &&
+			    (newXCell !== dragState.startXCell || newYCell !== dragState.startYCell)) {
+				clearTimeout(longPressTimer);
+				longPressTimer = null;
+			}
+
+			dragState.image.xCell = newXCell;
+			dragState.image.yCell = newYCell;
+			updateImagePosition(dragState.image);
+		}
 	}
 
 	if (resizeState) {
-		const dx = e.clientX - resizeState.startX;
-		const dy = e.clientY - resizeState.startY;
+		const dx = clientX - resizeState.startX;
+		const dy = clientY - resizeState.startY;
 
 		const cellSize = getCellSize();
 		const dxCells = Math.round(dx / cellSize.width);
@@ -602,11 +828,16 @@ document.addEventListener('mousemove', (e) => {
 		img.heightCells = newH;
 		updateImagePosition(img);
 	}
-});
+}
 
-document.addEventListener('mouseup', () => {
+function handleEnd() {
+	if (longPressTimer) {
+		clearTimeout(longPressTimer);
+		longPressTimer = null;
+	}
 	if (dragState) {
 		dragState.image.container.classList.remove('dragging');
+		dragState.image.container.style.opacity = '';
 		dragState = null;
 		// Restore the default cursor
 		document.body.style.cursor = '';
@@ -619,6 +850,31 @@ document.addEventListener('mouseup', () => {
 		document.body.style.cursor = '';
 		document.body.classList.remove('resizing');
 	}
+}
+
+document.addEventListener('mousemove', (e) => {
+	handleMove(e.clientX, e.clientY);
+});
+
+document.addEventListener('mouseup', () => {
+	handleEnd();
+});
+
+document.addEventListener('touchmove', (e) => {
+	// Only handle global drag/resize, not image-specific multi-touch
+	if ((dragState || resizeState) && e.touches.length === 1) {
+		e.preventDefault();
+		const touch = e.touches[0];
+		handleMove(touch.clientX, touch.clientY);
+	}
+}, { passive: false });
+
+document.addEventListener('touchend', () => {
+	handleEnd();
+});
+
+document.addEventListener('touchcancel', () => {
+	handleEnd();
 });
 
 // Update all image positions when window resizes (for responsive scaling)
