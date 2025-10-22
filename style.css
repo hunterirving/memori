@@ -241,7 +241,8 @@ body.dragging * {
 	z-index: 2;
 }
 
-.image-container:hover .resize-handle {
+.image-container:hover .resize-handle,
+.image-container.resizing .resize-handle {
 	opacity: 1;
 }
 
