@@ -353,7 +353,7 @@ function setupImageHandlers(imageData) {
 	});
 
 	// Unified pointer start handler
-	function handlePointerStart(clientX, clientY, isTouch = false) {
+	function handlePointerStart(clientX, clientY, isTouch = false, touchIdentifier = null) {
 		// Clear any existing timers from other images
 		clearDragState();
 
@@ -368,17 +368,27 @@ function setupImageHandlers(imageData) {
 			startXCell: imageData.xCell,
 			startYCell: imageData.yCell,
 			isPanMode: false, // Will be set to true after long press
-			isTouch: isTouch
+			isTouch: isTouch,
+			timerId: null, // Store timer ID to ensure we only activate the correct timer
+			touchIdentifier: touchIdentifier, // Track which touch this drag belongs to
+			hasMoved: false // Track if any movement has occurred
 		};
 
 		container.classList.add('dragging');
 
 		// For touch, set up long press timer to enable pan mode
 		if (isTouch) {
-			longPressTimer = setTimeout(() => {
-				if (dragState && dragState.image === imageData &&
+			const timerId = setTimeout(() => {
+				// Only activate pan mode if:
+				// 1. This drag state is still active
+				// 2. This drag state is for this specific image
+				// 3. The image hasn't moved to a new cell
+				// 4. This is the timer that was created for this drag state
+				if (dragState &&
+				    dragState.image === imageData &&
 				    dragState.startXCell === imageData.xCell &&
-				    dragState.startYCell === imageData.yCell) {
+				    dragState.startYCell === imageData.yCell &&
+				    dragState.timerId === timerId) {
 					// User held for 0.5 seconds without moving to a new cell - enable pan mode
 					dragState.isPanMode = true;
 					dragState.initialPanX = imageData.panX;
@@ -387,6 +397,8 @@ function setupImageHandlers(imageData) {
 					container.classList.add('pan-mode');
 				}
 			}, 500);
+			dragState.timerId = timerId;
+			longPressTimer = timerId;
 		}
 	}
 
@@ -401,7 +413,7 @@ function setupImageHandlers(imageData) {
 			// Single touch - start drag (or long press for pan)
 			e.preventDefault();
 			const touch = e.touches[0];
-			handlePointerStart(touch.clientX, touch.clientY, true);
+			handlePointerStart(touch.clientX, touch.clientY, true, touch.identifier);
 		} else if (e.touches.length === 2) {
 			// Two fingers - prepare for pinch/pan
 			e.preventDefault();
@@ -712,6 +724,24 @@ function handleMove(clientX, clientY) {
 		const dx = clientX - dragState.startX;
 		const dy = clientY - dragState.startY;
 
+		// Safari on iOS can send the first touchmove with stale coordinates when zoomed
+		// Validate that the first move is reasonable by checking if it would move more than 1 cell
+		if (dragState.isTouch && !dragState.hasMoved) {
+			const cellSize = getCellSize();
+			const dxCells = Math.abs(Math.round(dx / cellSize.width));
+			const dyCells = Math.abs(Math.round(dy / cellSize.height));
+
+			// If the first move would jump more than 1 cell in either direction,
+			// it's likely stale coordinates from a previous tap - reset start position
+			if (dxCells > 1 || dyCells > 1) {
+				dragState.startX = clientX;
+				dragState.startY = clientY;
+				dragState.hasMoved = true;
+				return; // Don't process this move event
+			}
+			dragState.hasMoved = true;
+		}
+
 		if (dragState.isPanMode) {
 			// Pan mode - move the image within its container
 			const imageData = dragState.image;
@@ -814,18 +844,53 @@ document.addEventListener('mouseup', () => {
 document.addEventListener('touchmove', (e) => {
 	// Only handle global drag/resize, not image-specific multi-touch
 	if ((dragState || resizeState) && e.touches.length === 1) {
-		e.preventDefault();
 		const touch = e.touches[0];
+
+		// For drag operations, verify this touch matches the one that started the drag
+		if (dragState && dragState.touchIdentifier !== null &&
+		    touch.identifier !== dragState.touchIdentifier) {
+			// This is a different touch - ignore it
+			return;
+		}
+
+		e.preventDefault();
 		handleMove(touch.clientX, touch.clientY);
 	}
 }, { passive: false });
 
-document.addEventListener('touchend', () => {
+document.addEventListener('touchend', (e) => {
+	// If we have an active drag state, only end it if the touch that's ending
+	// matches the touch that started the drag
+	if (dragState && dragState.touchIdentifier !== null && e.changedTouches.length > 0) {
+		let matchingTouchEnded = false;
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			if (e.changedTouches[i].identifier === dragState.touchIdentifier) {
+				matchingTouchEnded = true;
+				break;
+			}
+		}
+		// Only end the drag if the matching touch ended
+		if (!matchingTouchEnded) {
+			return;
+		}
+	}
+
 	handleEnd();
+
+	// Clear any lingering timers even if there's no active drag state
+	if (longPressTimer) {
+		clearTimeout(longPressTimer);
+		longPressTimer = null;
+	}
 });
 
 document.addEventListener('touchcancel', () => {
 	handleEnd();
+
+	if (longPressTimer) {
+		clearTimeout(longPressTimer);
+		longPressTimer = null;
+	}
 });
 
 // Update all image positions when window resizes (for responsive scaling)
