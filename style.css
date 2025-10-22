@@ -237,6 +237,38 @@ body {
 	border-color: var(--accent);
 }
 
+/* Visual feedback for pan mode on touch */
+.image-container.pan-mode::after {
+	border-color: var(--accent);
+	border-width: 3px;
+	border-style: solid;
+	animation: pulse-border 0.25s ease-out;
+}
+
+@keyframes pulse-border {
+	0% {
+		border-width: 2px;
+		opacity: 0.5;
+	}
+	50% {
+		border-width: 5px;
+		opacity: 1;
+	}
+	100% {
+		border-width: 3px;
+		opacity: 1;
+	}
+}
+
+/* Hide dimension labels and resize handles in pan mode */
+.image-container.pan-mode .dimension-label {
+	opacity: 0 !important;
+}
+
+.image-container.pan-mode .resize-handle {
+	opacity: 0 !important;
+}
+
 .image-container.resizing::after {
 	border-color: var(--accent);
 }
@@ -469,5 +501,10 @@ body.dragging * {
 @media (pointer: coarse), (hover: none) {
 	.add-images-btn {
 		display: block;
+	}
+
+	/* On touch devices, don't change opacity when dragging */
+	.image-container.dragging {
+		opacity: 1;
 	}
 }

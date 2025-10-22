@@ -383,6 +383,8 @@ function setupImageHandlers(imageData) {
 					dragState.isPanMode = true;
 					dragState.initialPanX = imageData.panX;
 					dragState.initialPanY = imageData.panY;
+					// Add visual feedback class
+					container.classList.add('pan-mode');
 				}
 			}, 500);
 		}
@@ -698,6 +700,7 @@ function clearDragState() {
 	}
 	if (dragState) {
 		dragState.image.container.classList.remove('dragging');
+		dragState.image.container.classList.remove('pan-mode');
 		dragState = null;
 		document.body.style.cursor = '';
 		document.body.classList.remove('dragging');
