@@ -9,7 +9,64 @@ function getCellSize() {
 	const gridRect = grid.getBoundingClientRect();
 	return {
 		width: gridRect.width / GRID_COLS,
-		height: gridRect.height / GRID_ROWS
+		height: gridRect.height / GRID_ROWS,
+		totalWidth: gridRect.width,
+		totalHeight: gridRect.height
+	};
+}
+
+// Calculate pixel-perfect position for a cell range
+// This accounts for grid cell borders (1px per cell) to ensure perfect alignment
+function getPixelPerfectBounds(cellX, cellY, cellWidth, cellHeight) {
+	// Get all grid cells and measure their actual positions
+	const gridCells = grid.querySelectorAll('.grid-cell');
+
+	// Calculate the index of the top-left cell
+	const startCellIndex = cellY * GRID_COLS + cellX;
+	const startCell = gridCells[startCellIndex];
+
+	if (!startCell) {
+		// Fallback if cell doesn't exist
+		const cellSize = getCellSize();
+		return {
+			left: cellX * cellSize.width,
+			top: cellY * cellSize.height,
+			width: cellWidth * cellSize.width,
+			height: cellHeight * cellSize.height
+		};
+	}
+
+	// Get the actual position of the start cell relative to the grid
+	const gridRect = grid.getBoundingClientRect();
+	const startCellRect = startCell.getBoundingClientRect();
+
+	const left = startCellRect.left - gridRect.left;
+	const top = startCellRect.top - gridRect.top;
+
+	// Calculate end position by finding the bottom-right cell
+	const endCellIndex = (cellY + cellHeight - 1) * GRID_COLS + (cellX + cellWidth - 1);
+	const endCell = gridCells[endCellIndex];
+
+	if (!endCell) {
+		// Fallback if end cell doesn't exist
+		const cellSize = getCellSize();
+		return {
+			left: left,
+			top: top,
+			width: cellWidth * cellSize.width,
+			height: cellHeight * cellSize.height
+		};
+	}
+
+	const endCellRect = endCell.getBoundingClientRect();
+	const right = endCellRect.right - gridRect.left;
+	const bottom = endCellRect.bottom - gridRect.top;
+
+	return {
+		left: left,
+		top: top,
+		width: right - left,
+		height: bottom - top
 	};
 }
 
@@ -193,11 +250,9 @@ function addImage(src, xCell, yCell, widthCells, heightCells) {
 		imageData.naturalHeight = img.naturalHeight;
 
 		// Calculate base scale to cover container (mimics object-fit: cover)
-		const cellSize = getCellSize();
-		const containerWidth = imageData.widthCells * cellSize.width;
-		const containerHeight = imageData.heightCells * cellSize.height;
-		const scaleX = containerWidth / img.naturalWidth;
-		const scaleY = containerHeight / img.naturalHeight;
+		const bounds = getPixelPerfectBounds(imageData.xCell, imageData.yCell, imageData.widthCells, imageData.heightCells);
+		const scaleX = bounds.width / img.naturalWidth;
+		const scaleY = bounds.height / img.naturalHeight;
 		imageData.baseScale = Math.max(scaleX, scaleY);
 
 		updateImagePosition(imageData);
@@ -214,9 +269,9 @@ function addImage(src, xCell, yCell, widthCells, heightCells) {
 
 function calculatePanBounds(imageData) {
 	// Container dimensions in the current (possibly swapped) grid orientation
-	const cellSize = getCellSize();
-	const containerWidth = imageData.widthCells * cellSize.width;
-	const containerHeight = imageData.heightCells * cellSize.height;
+	const bounds = getPixelPerfectBounds(imageData.xCell, imageData.yCell, imageData.widthCells, imageData.heightCells);
+	const containerWidth = bounds.width;
+	const containerHeight = bounds.height;
 
 	if (imageData.naturalWidth === 0 || imageData.naturalHeight === 0) {
 		return { maxPanX: 0, maxPanY: 0 };
@@ -281,11 +336,12 @@ function adjustPanForZoom(imageData, cursorX, cursorY, oldTotalScale, newTotalSc
 }
 
 function updateImagePosition(img) {
-	const cellSize = getCellSize();
-	img.container.style.left = img.xCell * cellSize.width + 'px';
-	img.container.style.top = img.yCell * cellSize.height + 'px';
-	img.container.style.width = img.widthCells * cellSize.width + 'px';
-	img.container.style.height = img.heightCells * cellSize.height + 'px';
+	// Use pixel-perfect bounds to prevent subpixel accumulation
+	const bounds = getPixelPerfectBounds(img.xCell, img.yCell, img.widthCells, img.heightCells);
+	img.container.style.left = bounds.left + 'px';
+	img.container.style.top = bounds.top + 'px';
+	img.container.style.width = bounds.width + 'px';
+	img.container.style.height = bounds.height + 'px';
 
 	// Store cell positions as CSS variables for print styles
 	img.container.style.setProperty('--x-cell', img.xCell);
@@ -313,8 +369,9 @@ function updateImagePosition(img) {
 
 	// Recalculate baseScale if container size changed
 	if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-		const containerWidth = img.widthCells * cellSize.width;
-		const containerHeight = img.heightCells * cellSize.height;
+		// Use pixel-perfect bounds for container dimensions
+		const containerWidth = bounds.width;
+		const containerHeight = bounds.height;
 
 		// When rotated 90° or 270°, the image dimensions are effectively swapped
 		const isRotated90or270 = img.rotation % 180 !== 0;
