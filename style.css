@@ -420,6 +420,13 @@ body.dragging * {
 		print-color-adjust: exact !important;
 	}
 
+	html, body {
+		position: static !important;
+		width: auto !important;
+		height: auto !important;
+		overflow: visible !important;
+	}
+
 	body {
 		background: var(--white);
 		padding: 0;
@@ -476,6 +483,10 @@ body.dragging * {
 		height: calc(var(--height-cells) * var(--cell-size-mm)) !important;
 	}
 
+	.image-container::after {
+		border: none !important;
+	}
+
 	.image-container .image-wrapper {
 		position: absolute !important;
 		top: 0 !important;
@@ -499,6 +510,10 @@ body.dragging * {
 	}
 
 	.dimension-label {
+		display: none !important;
+	}
+
+	.add-images-btn {
 		display: none !important;
 	}
 }
