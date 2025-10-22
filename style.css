@@ -168,6 +168,15 @@ body {
 }
 
 @media (max-width: 680px) {
+	body {
+		padding: 0;
+	}
+
+	.page {
+		max-width: 100vw;
+		box-shadow: none;
+	}
+
 	.grid {
 		border-bottom-style: solid;
 		border-right-style: solid;
