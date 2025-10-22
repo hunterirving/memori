@@ -436,3 +436,37 @@ body.dragging * {
 	size: 8.5in 11in;
 	margin: 0;
 }
+
+.add-images-btn {
+	display: none;
+	position: fixed;
+	bottom: 24px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: var(--accent);
+	color: var(--page);
+	border: none;
+	border-radius: 100px;
+	padding: 14px 28px;
+	font-size: 16px;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	font-weight: 600;
+	cursor: pointer;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+	z-index: 10000;
+	-webkit-tap-highlight-color: transparent;
+	user-select: none;
+	-webkit-user-select: none;
+	transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.add-images-btn:active {
+	transform: translateX(-50%) scale(0.95);
+	box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+@media (pointer: coarse), (hover: none) {
+	.add-images-btn {
+		display: block;
+	}
+}

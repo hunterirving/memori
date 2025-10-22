@@ -25,6 +25,98 @@ let dragState = null;
 let resizeState = null;
 let highestZIndex = 0;
 
+// Helper function to calculate image dimensions from aspect ratio
+function calculateImageDimensions(aspectRatio) {
+	let widthCells, heightCells;
+	if (aspectRatio >= 1) {
+		heightCells = 5;
+		widthCells = Math.round(heightCells * aspectRatio);
+	} else {
+		widthCells = 5;
+		heightCells = Math.round(widthCells / aspectRatio);
+	}
+	return {
+		widthCells: Math.min(widthCells, GRID_COLS),
+		heightCells: Math.min(heightCells, GRID_ROWS)
+	};
+}
+
+// Helper function to load an image and get its dimensions
+async function loadImageDimensions(file) {
+	const reader = new FileReader();
+	const dataUrl = await new Promise(resolve => {
+		reader.onload = (e) => resolve(e.target.result);
+		reader.readAsDataURL(file);
+	});
+
+	const img = new Image();
+	const dimensions = await new Promise(resolve => {
+		img.onload = () => {
+			const aspectRatio = img.width / img.height;
+			resolve(calculateImageDimensions(aspectRatio));
+		};
+		img.src = dataUrl;
+	});
+
+	return { dataUrl, ...dimensions };
+}
+
+// Shared function to process and add images to the grid
+async function processAndAddImages(files, dropX = 0, dropY = 0) {
+	const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+	if (imageFiles.length === 0) return;
+
+	const cellSize = getCellSize();
+
+	// Load first image to get base dimensions for positioning
+	const firstImageData = await loadImageDimensions(imageFiles[0]);
+
+	// Calculate base drop position
+	// For single images, center on cursor; for multiple images, place top-left at cursor
+	let baseXCell, baseYCell;
+	if (imageFiles.length === 1) {
+		baseXCell = Math.round(dropX / cellSize.width - firstImageData.widthCells / 2);
+		baseYCell = Math.round(dropY / cellSize.height - firstImageData.heightCells / 2);
+	} else {
+		baseXCell = Math.round(dropX / cellSize.width);
+		baseYCell = Math.round(dropY / cellSize.height);
+	}
+
+	// Pre-allocate z-indexes to maintain drop order
+	const baseZIndex = highestZIndex + 1;
+	highestZIndex += imageFiles.length;
+
+	// Load all images
+	const imageDataArray = [];
+	for (let idx = 0; idx < imageFiles.length; idx++) {
+		const data = idx === 0 ? firstImageData : await loadImageDimensions(imageFiles[idx]);
+		imageDataArray.push({ idx, ...data });
+	}
+
+	let wrappedOffset = 0;
+
+	for (const { idx, dataUrl, widthCells, heightCells } of imageDataArray) {
+		// Calculate position with diagonal offset
+		let xCell = baseXCell + idx;
+		let yCell = baseYCell + idx;
+
+		// If out of bounds or would overlap with wrapped images, wrap to next diagonal position
+		const outOfBounds = xCell < 0 || yCell < 0 ||
+		                    xCell + widthCells > GRID_COLS ||
+		                    yCell + heightCells > GRID_ROWS;
+		const overlapsWrapped = xCell < wrappedOffset || yCell < wrappedOffset;
+
+		if (outOfBounds || overlapsWrapped) {
+			xCell = wrappedOffset;
+			yCell = wrappedOffset;
+			wrappedOffset++;
+		}
+
+		const imageData = addImage(dataUrl, xCell, yCell, widthCells, heightCells);
+		imageData.container.style.zIndex = baseZIndex + idx;
+	}
+}
+
 // Prevent default drag behavior on entire document
 document.addEventListener('dragover', (e) => {
 	e.preventDefault();
@@ -35,88 +127,12 @@ document.addEventListener('drop', async (e) => {
 	e.preventDefault();
 	e.stopPropagation();
 
-	const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-	if (files.length === 0) return;
-
 	// Get drop position relative to the grid
 	const gridRect = grid.getBoundingClientRect();
-	const cellSize = getCellSize();
+	const dropX = e.clientX - gridRect.left;
+	const dropY = e.clientY - gridRect.top;
 
-	// Clamp drop position to grid boundaries
-	let dropX = e.clientX - gridRect.left;
-	let dropY = e.clientY - gridRect.top;
-	dropX = Math.max(0, Math.min(gridRect.width, dropX));
-	dropY = Math.max(0, Math.min(gridRect.height, dropY));
-
-	// Load first image to get base dimensions
-	let firstImageDimensions = null;
-	if (files.length > 0) {
-		const firstFile = files[0];
-		const reader = new FileReader();
-		const dataUrl = await new Promise(resolve => {
-			reader.onload = (e) => resolve(e.target.result);
-			reader.readAsDataURL(firstFile);
-		});
-
-		const img = new Image();
-		await new Promise(resolve => {
-			img.onload = () => {
-				const aspectRatio = img.width / img.height;
-				let widthCells, heightCells;
-				if (aspectRatio >= 1) {
-					heightCells = 5;
-					widthCells = Math.round(heightCells * aspectRatio);
-				} else {
-					widthCells = 5;
-					heightCells = Math.round(widthCells / aspectRatio);
-				}
-				widthCells = Math.min(widthCells, GRID_COLS);
-				heightCells = Math.min(heightCells, GRID_ROWS);
-				firstImageDimensions = { widthCells, heightCells };
-				resolve();
-			};
-			img.src = dataUrl;
-		});
-	}
-
-	// Now process all files
-	files.forEach((file, idx) => {
-		const reader = new FileReader();
-		reader.onload = (event) => {
-			const img = new Image();
-			img.onload = () => {
-				const aspectRatio = img.width / img.height;
-
-				// Set smaller dimension to 5 cells, calculate larger dimension
-				let widthCells, heightCells;
-				if (aspectRatio >= 1) {
-					// Width is larger or equal
-					heightCells = 5;
-					widthCells = Math.round(heightCells * aspectRatio);
-				} else {
-					// Height is larger
-					widthCells = 5;
-					heightCells = Math.round(widthCells / aspectRatio);
-				}
-
-				// Clamp to grid boundaries
-				widthCells = Math.min(widthCells, GRID_COLS);
-				heightCells = Math.min(heightCells, GRID_ROWS);
-
-				// Calculate position with first image's center under drop point
-				let xCell = Math.round(dropX / cellSize.width - firstImageDimensions.widthCells / 2) + (idx * 2);
-				let yCell = Math.round(dropY / cellSize.height - firstImageDimensions.heightCells / 2);
-
-				// Ensure image stays within grid bounds
-				xCell = Math.max(0, Math.min(GRID_COLS - widthCells, xCell));
-				yCell = Math.max(0, Math.min(GRID_ROWS - heightCells, yCell));
-
-				addImage(event.target.result, xCell, yCell, widthCells, heightCells);
-			};
-			img.src = event.target.result;
-		};
-		reader.readAsDataURL(file);
-	});
+	await processAndAddImages(e.dataTransfer.files, dropX, dropY);
 });
 
 function addImage(src, xCell, yCell, widthCells, heightCells) {
@@ -361,21 +377,14 @@ function setupImageHandlers(imageData) {
 
 		// Cmd-click (or Ctrl-click on Windows/Linux) to duplicate
 		if (e.metaKey || e.ctrlKey) {
-			// Calculate target position (2 cells to the right if there's room)
-			let newXCell = imageData.xCell + 2;
-			let newYCell = imageData.yCell;
+			// Calculate target position (1 cell right and 1 cell down)
+			let newXCell = imageData.xCell + 1;
+			let newYCell = imageData.yCell + 1;
 
-			// If there's not enough room to the right, try to place appropriately
-			if (newXCell + imageData.widthCells > GRID_COLS) {
-				// Try wrapping to next row
+			// If there's not enough room, fall back to top-left
+			if (newXCell + imageData.widthCells > GRID_COLS || newYCell + imageData.heightCells > GRID_ROWS) {
 				newXCell = 0;
-				newYCell = imageData.yCell + imageData.heightCells;
-
-				// If that goes off the bottom, place at origin
-				if (newYCell + imageData.heightCells > GRID_ROWS) {
-					newXCell = 0;
-					newYCell = 0;
-				}
+				newYCell = 0;
 			}
 
 			// Create duplicate with the same image source and dimensions
@@ -710,4 +719,19 @@ window.addEventListener('beforeunload', (e) => {
 		e.returnValue = '';
 		return '';
 	}
+});
+
+// Mobile file input handling
+const fileInput = document.getElementById('fileInput');
+const addImagesBtn = document.getElementById('addImagesBtn');
+
+addImagesBtn.addEventListener('click', () => {
+	fileInput.click();
+});
+
+fileInput.addEventListener('change', async (e) => {
+	await processAndAddImages(e.target.files, 0, 0);
+
+	// Clear the input so the same files can be selected again
+	fileInput.value = '';
 });
