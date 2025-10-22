@@ -176,13 +176,6 @@ body {
 }
 
 @media (max-width: 680px) {
-	html, body {
-		/* overflow: hidden; */
-		height: 100%;
-		position: fixed;
-		width: 100%;
-	}
-
 	body {
 		padding: 0;
 	}
@@ -397,10 +390,18 @@ body.dragging * {
 .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
 .resize-handle.sw::before { bottom: 0; left: 0; }
 
-/* Mobile: Larger 12px hitboxes for easier touch interaction */
 @media (pointer: coarse), (hover: none) {
 	html {
 		overscroll-behavior: none;
+	}
+
+	/* Only fix position in portrait mode to prevent scroll issues in landscape */
+	@media (orientation: portrait) {
+		html, body {
+			height: 100%;
+			position: fixed;
+			width: 100%;
+		}
 	}
 
 	.resize-handle.corner {
