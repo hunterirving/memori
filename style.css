@@ -122,7 +122,6 @@ body {
 	align-items: flex-start;
 	min-height: 100vh;
 	padding: 20px;
-	overflow-x: hidden;
 }
 
 .page {
@@ -168,6 +167,13 @@ body {
 }
 
 @media (max-width: 680px) {
+	html, body {
+		overflow: hidden;
+		height: 100%;
+		position: fixed;
+		width: 100%;
+	}
+
 	body {
 		padding: 0;
 	}
@@ -359,6 +365,7 @@ body.dragging * {
 	background: transparent;
 }
 
+/* Desktop: Original 10px hitboxes */
 .resize-handle.n { top: -5px; left: 5px; right: 5px; height: 10px; cursor: n-resize; }
 .resize-handle.s { bottom: -5px; left: 5px; right: 5px; height: 10px; cursor: s-resize; }
 .resize-handle.e { right: -5px; top: 5px; bottom: 5px; width: 10px; cursor: e-resize; }
@@ -375,6 +382,37 @@ body.dragging * {
 
 .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
 .resize-handle.sw::before { bottom: 0; left: 0; }
+
+/* Mobile: Larger 12px hitboxes for easier touch interaction */
+@media (pointer: coarse), (hover: none) {
+	html {
+		overscroll-behavior: none;
+	}
+
+	.resize-handle.corner {
+		width: 12px;
+		height: 12px;
+	}
+
+	.resize-handle.corner::before {
+		/* Center the visual dot within the larger hitbox */
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+
+	/* Edge handles with 12px hitboxes */
+	.resize-handle.n { top: -6px; height: 12px; }
+	.resize-handle.s { bottom: -6px; height: 12px; }
+	.resize-handle.e { right: -6px; width: 12px; }
+	.resize-handle.w { left: -6px; width: 12px; }
+
+	/* Corner handles with 12px hitboxes, centered on the visual corner */
+	.resize-handle.ne { top: -6px; right: -6px; }
+	.resize-handle.nw { top: -6px; left: -6px; }
+	.resize-handle.se { bottom: -6px; right: -6px; }
+	.resize-handle.sw { bottom: -6px; left: -6px; }
+}
 
 @media print {
 	* {
@@ -501,6 +539,8 @@ body.dragging * {
 @media (pointer: coarse), (hover: none) {
 	.add-images-btn {
 		display: block;
+		bottom: 0;
+		margin-bottom: 24px;
 	}
 
 	/* On touch devices, don't change opacity when dragging */
