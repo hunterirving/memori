@@ -149,9 +149,6 @@ body {
 	line-height: 0;
 	position: relative; /* Image containers are positioned relative to grid */
 	/* Grid is centered within .page by the parent's flexbox */
-	/* Bottom and right borders for the entire grid */
-	border-bottom: 1px dashed var(--grid-line);
-	border-right: 1px dashed var(--grid-line);
 	box-sizing: border-box;
 }
 
@@ -166,9 +163,21 @@ body {
 	display: block;
 }
 
+/* Add right border to rightmost column (every 50th cell starting from cell 50) */
+.grid-cell:nth-child(50n) {
+	border-right: 1px dashed var(--grid-line);
+	width: calc(100% + 1px);
+}
+
+/* Add bottom border to bottom row (last 50 cells: 3251-3300) */
+.grid-cell:nth-child(n + 3251) {
+	border-bottom: 1px dashed var(--grid-line);
+	height: calc(100% + 1px);
+}
+
 @media (max-width: 680px) {
 	html, body {
-		overflow: hidden;
+		/* overflow: hidden; */
 		height: 100%;
 		position: fixed;
 		width: 100%;
@@ -183,18 +192,23 @@ body {
 		box-shadow: none;
 	}
 
-	.grid {
-		border-bottom-style: solid;
-		border-right-style: solid;
-		border-bottom-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
-		border-right-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
-	}
-
 	.grid-cell {
 		border-top-style: solid;
 		border-left-style: solid;
 		border-top-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
 		border-left-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
+	}
+
+	.grid-cell:nth-child(50n) {
+		border-right-style: solid;
+		border-right-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
+		width: calc(100% + 1px);
+	}
+
+	.grid-cell:nth-child(n + 3251) {
+		border-bottom-style: solid;
+		border-bottom-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
+		height: calc(100% + 1px);
 	}
 }
 
@@ -219,7 +233,7 @@ body {
 	border: 2px solid transparent;
 	transition: border-color 0.2s;
 	z-index: 1;
-	overflow: hidden;
+	/* overflow: hidden; */
 }
 
 .image-container .image-wrapper {
@@ -457,8 +471,6 @@ body.dragging * {
 		grid-template-columns: repeat(var(--grid-cols), 1fr) !important;
 		grid-template-rows: repeat(var(--grid-rows), 1fr) !important;
 		position: relative !important;
-		border-bottom: 1px dashed var(--default-grid) !important;
-		border-right: 1px dashed var(--default-grid) !important;
 		box-sizing: border-box !important;
 	}
 
@@ -470,6 +482,16 @@ body.dragging * {
 		height: 100% !important;
 		margin: 0 !important;
 		padding: 0 !important;
+	}
+
+	.grid-cell:nth-child(50n) {
+		border-right: 1px dashed var(--default-grid) !important;
+		width: calc(100% + 1px) !important;
+	}
+
+	.grid-cell:nth-child(n + 3251) {
+		border-bottom: 1px dashed var(--default-grid) !important;
+		height: calc(100% + 1px) !important;
 	}
 
 	.image-container {
