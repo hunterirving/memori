@@ -253,6 +253,33 @@ function clampPan(imageData) {
 	imageData.panY = Math.max(-maxPanY, Math.min(maxPanY, imageData.panY));
 }
 
+// Helper to transform screen-space coordinates to image coordinate space (accounting for rotation)
+function rotatePoint(x, y, angleDegrees) {
+	const angle = -angleDegrees * Math.PI / 180;
+	const cos = Math.cos(angle);
+	const sin = Math.sin(angle);
+	return {
+		x: x * cos - y * sin,
+		y: x * sin + y * cos
+	};
+}
+
+// Helper to apply pan adjustment based on screen delta
+function applyPanDelta(imageData, screenDeltaX, screenDeltaY) {
+	const rotated = rotatePoint(screenDeltaX, screenDeltaY, imageData.rotation);
+	const totalScale = imageData.baseScale * imageData.userScale;
+	imageData.panX += rotated.x / totalScale;
+	imageData.panY += rotated.y / totalScale;
+}
+
+// Helper to calculate zoom-centered pan adjustment
+function adjustPanForZoom(imageData, cursorX, cursorY, oldTotalScale, newTotalScale) {
+	const rotated = rotatePoint(cursorX, cursorY, imageData.rotation);
+	const scaleDiff = 1/newTotalScale - 1/oldTotalScale;
+	imageData.panX += rotated.x * scaleDiff;
+	imageData.panY += rotated.y * scaleDiff;
+}
+
 function updateImagePosition(img) {
 	const cellSize = getCellSize();
 	img.container.style.left = img.xCell * cellSize.width + 'px';
@@ -328,10 +355,7 @@ function setupImageHandlers(imageData) {
 	// Unified pointer start handler
 	function handlePointerStart(clientX, clientY, isTouch = false) {
 		// Clear any existing timers from other images
-		if (longPressTimer) {
-			clearTimeout(longPressTimer);
-			longPressTimer = null;
-		}
+		clearDragState();
 
 		// Lock cursor to move during drag operation
 		document.body.style.cursor = 'move';
@@ -380,17 +404,8 @@ function setupImageHandlers(imageData) {
 			// Two fingers - prepare for pinch/pan
 			e.preventDefault();
 
-			// Cancel any ongoing drag and long press timer
-			if (longPressTimer) {
-				clearTimeout(longPressTimer);
-				longPressTimer = null;
-			}
-			if (dragState) {
-				dragState.image.container.classList.remove('dragging');
-				dragState = null;
-				document.body.style.cursor = '';
-				document.body.classList.remove('dragging');
-			}
+			// Cancel any ongoing drag
+			clearDragState();
 
 			const touch1 = e.touches[0];
 			const touch2 = e.touches[1];
@@ -453,16 +468,10 @@ function setupImageHandlers(imageData) {
 				const newUserScale = Math.max(1, Math.min(5, touchState.initialScale * scaleFactor));
 				const newTotalScale = imageData.baseScale * newUserScale;
 
-				// Transform cursor position to account for rotation
-				const angle = -imageData.rotation * Math.PI / 180;
-				const cos = Math.cos(angle);
-				const sin = Math.sin(angle);
-				const rotatedCursorX = cursorX * cos - cursorY * sin;
-				const rotatedCursorY = cursorX * sin + cursorY * cos;
-
-				// Calculate new pan to keep zoom centered on pinch point
-				imageData.panX = rotatedCursorX * (1/newTotalScale - 1/oldTotalScale) + touchState.lastPanX;
-				imageData.panY = rotatedCursorY * (1/newTotalScale - 1/oldTotalScale) + touchState.lastPanY;
+				// Restore previous pan state and apply zoom adjustment
+				imageData.panX = touchState.lastPanX;
+				imageData.panY = touchState.lastPanY;
+				adjustPanForZoom(imageData, cursorX, cursorY, oldTotalScale, newTotalScale);
 				imageData.userScale = newUserScale;
 
 				clampPan(imageData);
@@ -470,21 +479,9 @@ function setupImageHandlers(imageData) {
 				touchState.lastPanY = imageData.panY;
 			} else {
 				// Two-finger pan
-				const deltaX = centerMoveX;
-				const deltaY = centerMoveY;
-
-				// Transform deltas to account for image rotation
-				const angle = -imageData.rotation * Math.PI / 180;
-				const cos = Math.cos(angle);
-				const sin = Math.sin(angle);
-				const rotatedDeltaX = deltaX * cos - deltaY * sin;
-				const rotatedDeltaY = deltaX * sin + deltaY * cos;
-
-				// Convert screen-space delta to pre-scale image space
-				// Note: positive delta means moving fingers right/down, which should move image right/down
-				const totalScale = imageData.baseScale * imageData.userScale;
-				imageData.panX = touchState.lastPanX + rotatedDeltaX / totalScale;
-				imageData.panY = touchState.lastPanY + rotatedDeltaY / totalScale;
+				imageData.panX = touchState.lastPanX;
+				imageData.panY = touchState.lastPanY;
+				applyPanDelta(imageData, centerMoveX, centerMoveY);
 
 				clampPan(imageData);
 				touchState.lastPanX = imageData.panX;
@@ -622,49 +619,39 @@ function setupImageHandlers(imageData) {
 		handlePointerStart(e.clientX, e.clientY);
 	});
 
-	// Resizing
+	// Resizing - unified handler for mouse and touch
+	function startResize(clientX, clientY, direction, cursorStyle = null) {
+		if (cursorStyle) {
+			document.body.style.cursor = cursorStyle;
+		}
+		document.body.classList.add('resizing');
+
+		resizeState = {
+			image: imageData,
+			direction: direction,
+			startX: clientX,
+			startY: clientY,
+			startXCell: imageData.xCell,
+			startYCell: imageData.yCell,
+			startWidthCells: imageData.widthCells,
+			startHeightCells: imageData.heightCells
+		};
+		container.classList.add('resizing');
+	}
+
 	container.querySelectorAll('.resize-handle').forEach(handle => {
 		handle.addEventListener('mousedown', (e) => {
 			e.preventDefault();
 			e.stopPropagation();
-
-			// Get the cursor style from the handle and apply it to the body
 			const cursorStyle = window.getComputedStyle(handle).cursor;
-			document.body.style.cursor = cursorStyle;
-			document.body.classList.add('resizing');
-
-			resizeState = {
-				image: imageData,
-				direction: handle.dataset.direction,
-				startX: e.clientX,
-				startY: e.clientY,
-				startXCell: imageData.xCell,
-				startYCell: imageData.yCell,
-				startWidthCells: imageData.widthCells,
-				startHeightCells: imageData.heightCells
-			};
-			container.classList.add('resizing');
+			startResize(e.clientX, e.clientY, handle.dataset.direction, cursorStyle);
 		});
 
-		// Touch support for resize handles
 		handle.addEventListener('touchstart', (e) => {
 			e.preventDefault();
 			e.stopPropagation();
-
 			const touch = e.touches[0];
-			document.body.classList.add('resizing');
-
-			resizeState = {
-				image: imageData,
-				direction: handle.dataset.direction,
-				startX: touch.clientX,
-				startY: touch.clientY,
-				startXCell: imageData.xCell,
-				startYCell: imageData.yCell,
-				startWidthCells: imageData.widthCells,
-				startHeightCells: imageData.heightCells
-			};
-			container.classList.add('resizing');
+			startResize(touch.clientX, touch.clientY, handle.dataset.direction);
 		}, { passive: false });
 	});
 
@@ -680,8 +667,8 @@ function setupImageHandlers(imageData) {
 		if (e.ctrlKey) {
 			// Zoom at cursor position
 			const rect = container.getBoundingClientRect();
-			const cursorX = e.clientX - rect.left - rect.width / 2; // Screen pixels from center
-			const cursorY = e.clientY - rect.top - rect.height / 2; // Screen pixels from center
+			const cursorX = e.clientX - rect.left - rect.width / 2;
+			const cursorY = e.clientY - rect.top - rect.height / 2;
 
 			const oldUserScale = imageData.userScale;
 			const oldTotalScale = imageData.baseScale * oldUserScale;
@@ -689,49 +676,32 @@ function setupImageHandlers(imageData) {
 			const newUserScale = Math.max(1, Math.min(5, oldUserScale * (1 + zoomDelta)));
 			const newTotalScale = imageData.baseScale * newUserScale;
 
-			// Transform cursor position to account for rotation
-			// The CSS transform applies rotation before pan, so we need to rotate the cursor position
-			// into the image's coordinate system (inverse rotation)
-			const angle = -imageData.rotation * Math.PI / 180; // Negative for inverse rotation
-			const cos = Math.cos(angle);
-			const sin = Math.sin(angle);
-			const rotatedCursorX = cursorX * cos - cursorY * sin;
-			const rotatedCursorY = cursorX * sin + cursorY * cos;
-
-			// The point under the cursor in pre-scale image space is:
-			// imagePoint = (cursorScreen / oldTotalScale) - panX
-			// We want: (imagePoint + newPanX) * newTotalScale = cursorScreen
-			// So: newPanX = (cursorScreen / newTotalScale) - imagePoint
-			//            = (cursorScreen / newTotalScale) - (cursorScreen / oldTotalScale - panX)
-			//            = cursorScreen * (1/newTotalScale - 1/oldTotalScale) + panX
-			imageData.panX = rotatedCursorX * (1/newTotalScale - 1/oldTotalScale) + imageData.panX;
-			imageData.panY = rotatedCursorY * (1/newTotalScale - 1/oldTotalScale) + imageData.panY;
+			adjustPanForZoom(imageData, cursorX, cursorY, oldTotalScale, newTotalScale);
 			imageData.userScale = newUserScale;
 
-			// Clamp after zooming to prevent whitespace
 			clampPan(imageData);
 		} else {
 			// Pan (two-finger scroll on macOS trackpad)
-			// Transform deltas to account for image rotation
-			const angle = -imageData.rotation * Math.PI / 180; // Negative because we want screen-to-image transform
-			const cos = Math.cos(angle);
-			const sin = Math.sin(angle);
-
-			// Rotate the delta vector by the negative of the image rotation
-			const rotatedDeltaX = e.deltaX * cos - e.deltaY * sin;
-			const rotatedDeltaY = e.deltaX * sin + e.deltaY * cos;
-
-			// Convert screen-space delta to pre-scale image space
-			const totalScale = imageData.baseScale * imageData.userScale;
-			imageData.panX -= rotatedDeltaX / totalScale;
-			imageData.panY -= rotatedDeltaY / totalScale;
-
-			// Clamp pan to prevent whitespace
+			applyPanDelta(imageData, -e.deltaX, -e.deltaY);
 			clampPan(imageData);
 		}
 
 		updateImagePosition(imageData);
 	}, { passive: false });
+}
+
+// Helper to clear drag state and timers
+function clearDragState() {
+	if (longPressTimer) {
+		clearTimeout(longPressTimer);
+		longPressTimer = null;
+	}
+	if (dragState) {
+		dragState.image.container.classList.remove('dragging');
+		dragState = null;
+		document.body.style.cursor = '';
+		document.body.classList.remove('dragging');
+	}
 }
 
 function handleMove(clientX, clientY) {
@@ -742,19 +712,9 @@ function handleMove(clientX, clientY) {
 		if (dragState.isPanMode) {
 			// Pan mode - move the image within its container
 			const imageData = dragState.image;
-
-			// Transform deltas to account for image rotation
-			const angle = -imageData.rotation * Math.PI / 180;
-			const cos = Math.cos(angle);
-			const sin = Math.sin(angle);
-			const rotatedDeltaX = dx * cos - dy * sin;
-			const rotatedDeltaY = dx * sin + dy * cos;
-
-			// Convert screen-space delta to pre-scale image space
-			const totalScale = imageData.baseScale * imageData.userScale;
-			imageData.panX = dragState.initialPanX + rotatedDeltaX / totalScale;
-			imageData.panY = dragState.initialPanY + rotatedDeltaY / totalScale;
-
+			imageData.panX = dragState.initialPanX;
+			imageData.panY = dragState.initialPanY;
+			applyPanDelta(imageData, dx, dy);
 			clampPan(imageData);
 			updateImagePosition(imageData);
 		} else {
@@ -831,22 +791,10 @@ function handleMove(clientX, clientY) {
 }
 
 function handleEnd() {
-	if (longPressTimer) {
-		clearTimeout(longPressTimer);
-		longPressTimer = null;
-	}
-	if (dragState) {
-		dragState.image.container.classList.remove('dragging');
-		dragState.image.container.style.opacity = '';
-		dragState = null;
-		// Restore the default cursor
-		document.body.style.cursor = '';
-		document.body.classList.remove('dragging');
-	}
+	clearDragState();
 	if (resizeState) {
 		resizeState.image.container.classList.remove('resizing');
 		resizeState = null;
-		// Restore the default cursor
 		document.body.style.cursor = '';
 		document.body.classList.remove('resizing');
 	}
