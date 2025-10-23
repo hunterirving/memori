@@ -15,7 +15,7 @@ Two tiny problems with this:
 	</li>
 </ol>
 <img src="readme_images/premium_plan.jpg">
-<br><br>
+
 So here's a web app that does the same thing (and then some) for free.
 
 ## usage
