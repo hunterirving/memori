@@ -14,7 +14,7 @@
 
 	/* toast theme colors */
 	--butter: #ffe598;
-	--cream: #fffef9;
+	--white-wheat: #fffef9;
 	--crumb: #decca3;
 	--peanut-butter: #be852a;
 
@@ -30,11 +30,11 @@
 	--concentrate: #b8a9dd;
 	--syrup: #7c5cbe;
 
-	/* coral theme colors */
-	--reef: #ff9b87;
-	--pearl: #fff8f6;
-	--sand: #f0bcb3;
-	--anemone: #ff6b51;
+	/* grapefruit theme colors */
+	--rind: #ff9b87;
+	--pith: #fff8f6;
+	--pulp: #f0bcb3;
+	--ruby: #ff6b51;
 
 	/* sea-breeze theme colors */
 	--cerulean: #a3d5ff;
@@ -73,7 +73,7 @@
 
 :root[data-theme="toast"] {
 	--desk: var(--butter);
-	--page: var(--cream);
+	--page: var(--white-wheat);
 	--grid-line: var(--crumb);
 	--accent: var(--peanut-butter);
 }
@@ -92,11 +92,11 @@
 	--accent: var(--syrup);
 }
 
-:root[data-theme="coral"] {
-	--desk: var(--reef);
-	--page: var(--pearl);
-	--grid-line: var(--sand);
-	--accent: var(--anemone);
+:root[data-theme="grapefruit"] {
+	--desk: var(--rind);
+	--page: var(--pith);
+	--grid-line: var(--pulp);
+	--accent: var(--ruby);
 }
 
 :root[data-theme="sea-breeze"] {

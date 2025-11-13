@@ -993,7 +993,7 @@ window.addEventListener('afterprint', () => {
 // Theme system
 let currentThemeIndex = 0;
 let isF2Pressed = false;
-const themes = ['sea-breeze', 'grape-soda', 'coral', 'guac', 'mojito', 'toast'];
+const themes = ['sea-breeze', 'grape-soda', 'grapefruit', 'guac', 'mojito', 'toast'];
 
 function setTheme(theme) {
 	document.documentElement.setAttribute('data-theme', theme);
