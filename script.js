@@ -4,6 +4,9 @@ const GRID_ROWS = 66;
 const grid = document.getElementById('grid');
 const page = document.querySelector('.page');
 
+let popupElement = null;
+let popupTimeout = null;
+
 // Calculate cell size dynamically based on actual grid dimensions
 function getCellSize() {
 	const gridRect = grid.getBoundingClientRect();
@@ -1064,3 +1067,22 @@ fileInput.addEventListener('change', async (e) => {
 	// Clear the input so the same files can be selected again
 	fileInput.value = '';
 });
+
+function showPopup(message, displayDuration = 1250) {
+	if (!popupElement) {
+		popupElement = document.createElement('div');
+		popupElement.className = 'popup-notification';
+		document.body.appendChild(popupElement);
+	}
+
+	if (popupTimeout) clearTimeout(popupTimeout);
+
+	popupElement.textContent = message;
+	popupElement.classList.remove('fade-out');
+	popupElement.classList.add('show');
+
+	popupTimeout = setTimeout(() => {
+		popupElement.classList.remove('show');
+		popupElement.classList.add('fade-out');
+	}, displayDuration);
+}
