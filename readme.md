@@ -71,13 +71,16 @@ Once you've filled out the page, press ```⌘ + P``` to print using your system'
 >- select "Scale: 100%" rather than "Fit to page width"
 >- set Margins to None or 0
 
-Use a hobby knife and a straightedge (or regular old scissors) to cut your images to size:
+Use a hobby knife and straightedge (or regular old scissors) to cut your images to size:
 
 <img src="readme_images/cut_out.jpg" width=400px>
 
 Then stick 'em down with a gluestick (or try printing with sticker paper):
 
 <img src="readme_images/spread.jpg" width=400px>
+
+What will you remember?
+
 <img src="readme_images/spread2.jpg" width=400px>
 
 ## disclaimer
