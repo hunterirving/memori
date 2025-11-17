@@ -22,16 +22,19 @@ So here's a web app that does the same thing (and then some) for free.
 ## usage
 <img src="readme_images/usage.gif">
 
-Different Techo types use differently-spaced grid paper. Use the links below to select the appropriate spacing for your Techo.
+Different Techo types use differently-sized grid paper. Use the links below to select the appropriate grid size for your Techo.
 
 | <b>Techo</b> | <b>Link</b> |
 |-------------------|-------------|
-| Planner A6 | [Use 4mm grid ↗](link)<br>(default) |
-| Original<br>Cousin<br>HON A6<br>HON A5<br>Original Avec<br>Cousin Avec<br>5-Year Techo A6<br>5-Year Techo A5<br>Day-Free A6<br>Day-Free A5 | [Use 3.7mm grid ↗](link) |
-| Weeks<br>Weeks Mega | [Use 3.55mm grid ↗](link) |
+| Planner A6 | [Use 4mm grid ↗](https://hunterirving.github.io/memori?grid-size=4mm)<br>(default) |
+| Original<br>Cousin<br>HON A6<br>HON A5<br>Original Avec<br>Cousin Avec<br>5-Year Techo A6<br>5-Year Techo A5<br>Day-Free A6<br>Day-Free A5 | [Use 3.7mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.7mm) |
+| Weeks<br>Weeks Mega | [Use 3.55mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.55mm) |
 
-After opening memori in your web browser, drag one or more images from your desktop onto the grid.
 
+
+### controls
+
+- After opening memori in your web browser, drag one or more images from your desktop onto the grid.<br>
 <img src="readme_images/drag_n_drop.gif">
 
 - click and drag images to move them<br>
