@@ -42,15 +42,14 @@
 	--horizon: #85c0f5;
 	--lagoon: #2196f3;
 
-	/* Grid configuration */
-	--grid-cols: 50;
+	--grid-cols: 49;
 	--grid-rows: 66;
-	--cell-size-mm: 4mm; /* Cell size for print */
+	--cell-size-mm: 4mm;
 
-	/* Page dimensions: 8.5in = 216mm, 11in = 279.4mm */
-	/* Grid dimensions at print: 200mm x 264mm */
-	/* Grid as percentage of page: 200/216 = 92.59%, 264/279.4 = 94.48% */
-	--grid-width-percent: 92.59%;
+	/* Screen view: Grid as percentage of page (centered on US Letter simulation) */
+	/* Grid width as percent of Letter: 196/215.9 = 90.78% */
+	/* Grid height as percent of Letter: 264/279.4 = 94.48% */
+	--grid-width-percent: 90.78%;
 	--grid-height-percent: 94.48%;
 
 	/* Default theme (sea-breeze) */
@@ -166,14 +165,14 @@ body {
 	display: block;
 }
 
-/* Add right border to rightmost column (every 50th cell starting from cell 50) */
-.grid-cell:nth-child(50n) {
+/* Add right border to rightmost column (every 49th cell starting from cell 49) */
+.grid-cell:nth-child(49n) {
 	border-right: 1px dashed var(--grid-line);
 	width: calc(100% + 1px);
 }
 
-/* Add bottom border to bottom row (last 50 cells: 3251-3300) */
-.grid-cell:nth-child(n + 3251) {
+/* Add bottom border to bottom row (last 49 cells: 3185-3234) */
+.grid-cell:nth-child(n + 3185) {
 	border-bottom: 1px dashed var(--grid-line);
 	height: calc(100% + 1px);
 }
@@ -195,13 +194,13 @@ body {
 		border-left-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
 	}
 
-	.grid-cell:nth-child(50n) {
+	.grid-cell:nth-child(49n) {
 		border-right-style: solid;
 		border-right-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
 		width: calc(100% + 1px);
 	}
 
-	.grid-cell:nth-child(n + 3251) {
+	.grid-cell:nth-child(n + 3185) {
 		border-bottom-style: solid;
 		border-bottom-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
 		height: calc(100% + 1px);
@@ -439,38 +438,34 @@ body.dragging * {
 	}
 
 	html, body {
-		position: static !important;
-		width: auto !important;
-		height: auto !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		width: 100% !important;
+		height: 100vh !important;
 		overflow: visible !important;
 	}
 
 	body {
-		background: var(--white);
-		padding: 0;
-		margin: 0;
-		display: block;
-		align-items: initial;
-		justify-content: initial;
-	}
-
-	.page {
-		width: 8.5in !important;
-		max-width: 8.5in !important;
-		height: 11in !important;
-		box-shadow: none;
-		margin: 0;
-		padding: 0;
 		background: var(--white);
 		display: flex !important;
 		align-items: center !important;
 		justify-content: center !important;
 	}
 
+	.page {
+		width: auto !important;
+		height: auto !important;
+		max-width: none !important;
+		box-shadow: none;
+		margin: 0;
+		padding: 0;
+		background: var(--white);
+		display: block !important;
+	}
+
 	.grid {
-		/* Use fixed dimensions for print: 50 cells * 4mm = 200mm, 66 cells * 4mm = 264mm */
-		width: 200mm !important;
-		height: 264mm !important;
+		width: calc(var(--grid-cols) * var(--cell-size-mm)) !important;
+		height: calc(var(--grid-rows) * var(--cell-size-mm)) !important;
 		display: grid;
 		grid-template-columns: repeat(var(--grid-cols), 1fr) !important;
 		grid-template-rows: repeat(var(--grid-rows), 1fr) !important;
@@ -488,14 +483,20 @@ body.dragging * {
 		padding: 0 !important;
 	}
 
-	.grid-cell:nth-child(50n) {
+	.grid-cell:nth-child(49n) {
 		border-right: 1px dashed var(--default-grid) !important;
 		width: calc(100% + 1px) !important;
 	}
 
-	.grid-cell:nth-child(n + 3251) {
+	.grid-cell:nth-child(n + 3185) {
 		border-bottom: 1px dashed var(--default-grid) !important;
 		height: calc(100% + 1px) !important;
+	}
+
+	/* Remove bottom border from cell above bottom-right corner to prevent artifact */
+	.grid-cell:nth-child(3185) {
+		border-bottom: none !important;
+		height: 100% !important;
 	}
 
 	.image-container {
@@ -545,7 +546,6 @@ body.dragging * {
 }
 
 @page {
-	size: 8.5in 11in;
 	margin: 0;
 }
 

@@ -1,5 +1,6 @@
-const GRID_COLS = 50;
+const GRID_COLS = 49;
 const GRID_ROWS = 66;
+const CELL_SIZE_MM = 4; // Physical size of each cell when printed
 
 const grid = document.getElementById('grid');
 const page = document.querySelector('.page');
@@ -961,7 +962,7 @@ window.addEventListener('resize', () => {
 });
 
 // Adjust image scales for print and restore after
-const PRINT_CELL_SIZE_PX = 4 * 96 / 25.4; // 4mm in pixels at 96 DPI
+const PRINT_CELL_SIZE_PX = CELL_SIZE_MM * 96 / 25.4; // Cell size in pixels at 96 DPI
 
 window.addEventListener('beforeprint', () => {
 	images.forEach(img => {
