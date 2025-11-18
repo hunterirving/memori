@@ -45,7 +45,7 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 
 - hover an image and drag with two fingers to pan (set the "crop" - the part of the image that's visible)<br>
 	- or, when using a mouse, hover an image and `scroll` to pan vertically, or use `shift + scroll` to pan horizontally<br>
-	<img src="readme_images/pan.gif">
+<img src="readme_images/pan.gif">
 
 
 - ```⌘ + click``` an image to duplicate it<br>
