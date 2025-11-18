@@ -40,8 +40,8 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 <img src="readme_images/resize.gif">
 
 - hover an image and pinch to scale (on supported trackpads)<br>
-<img src="readme_images/scale.gif">
 	- or, when using a mouse, scale with `ctrl + scroll`
+<img src="readme_images/scale.gif">
 
 - hover an image and drag with two fingers to pan (set the "crop" - the part of the image that's visible)<br>
 <img src="readme_images/pan.gif">
