@@ -20,7 +20,7 @@ Two tiny problems with this:
 So here's a web app that does the same thing (and then some) for free.
 
 ## usage
-Different Techo types use differently-sized grid paper. Use the links below to select the appropriate grid size for your Techo.
+Different Techo types use differently-sized grid paper. Use the links below to select the appropriate grid size for your Techo:
 
 | <b>Techo</b> | <b>Link</b> |
 |-------------------|-------------|
@@ -69,7 +69,7 @@ Once you've filled out the page, press ```⌘ + P``` to print using your system'
 >- set Margins to None or 0<br>
 > <img src="readme_images/print_options.png" width=200px>
 
-<img src="readme_images/printed.jpg" height=450px>
+<img src="readme_images/printed.jpg" width=400px>
 
 Use a hobby knife and straightedge (or regular old scissors) to cut your images to size:
 
