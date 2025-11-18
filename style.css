@@ -12,11 +12,11 @@
 	--lime: #a9cf51;
 	--avocado: #7a8520;
 
-	/* toast theme colors */
-	--butter: #ffe598;
-	--white-wheat: #fffef9;
-	--crumb: #decca3;
-	--peanut-butter: #be852a;
+	/* banana theme colors */
+	--peel: #ffcc12;
+	--flesh: #f8f5e3;
+	--unripe: #a5d269;
+	--bruise: #4d4235;
 
 	/* mojito theme colors */
 	--mint: #9febaa;
@@ -42,25 +42,28 @@
 	--horizon: #85c0f5;
 	--lagoon: #2196f3;
 
-	/* Grid configuration */
-	--grid-cols: 50;
+	--grid-cols: 49;
 	--grid-rows: 66;
-	--cell-size-mm: 4mm; /* Cell size for print */
+	--cell-size-mm: 4mm;
 
-	/* Page dimensions: 8.5in = 216mm, 11in = 279.4mm */
-	/* Grid dimensions at print: 200mm x 264mm */
-	/* Grid as percentage of page: 200/216 = 92.59%, 264/279.4 = 94.48% */
-	--grid-width-percent: 92.59%;
+	/* Screen view: Grid as percentage of page (centered on US Letter simulation) */
+	/* Grid width as percent of Letter: 196/215.9 = 90.78% */
+	/* Grid height as percent of Letter: 264/279.4 = 94.48% */
+	--grid-width-percent: 90.78%;
 	--grid-height-percent: 94.48%;
 
 	/* Default theme (sea-breeze) */
 	--desk: var(--cerulean);
 	--page: var(--mist);
 	--grid-line: var(--horizon);
+	--grid-line-light: color-mix(in srgb, var(--grid-line) 65%, transparent);
 	--accent: var(--lagoon);
 
 	/* Set text color for all themes */
 	color: var(--white);
+
+	/* Set font */
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* Theme definitions */
@@ -71,11 +74,11 @@
 	--accent: var(--onion);
 }
 
-:root[data-theme="toast"] {
-	--desk: var(--butter);
-	--page: var(--white-wheat);
-	--grid-line: var(--crumb);
-	--accent: var(--peanut-butter);
+:root[data-theme="banana"] {
+	--desk: var(--peel);
+	--page: var(--flesh);
+	--grid-line: var(--unripe);
+	--accent: var(--bruise);
 }
 
 :root[data-theme="mojito"] {
@@ -163,16 +166,34 @@ body {
 	display: block;
 }
 
-/* Add right border to rightmost column (every 50th cell starting from cell 50) */
-.grid-cell:nth-child(50n) {
+/* Add right border to rightmost column */
+.grid-cell.right-edge {
 	border-right: 1px dashed var(--grid-line);
 	width: calc(100% + 1px);
 }
 
-/* Add bottom border to bottom row (last 50 cells: 3251-3300) */
-.grid-cell:nth-child(n + 3251) {
+/* Add bottom border to bottom row */
+.grid-cell.bottom-edge {
 	border-bottom: 1px dashed var(--grid-line);
 	height: calc(100% + 1px);
+}
+
+/* Solid grid lines for cell sizes <= 3.56mm (screen preview only) */
+.solid-grid .grid-cell {
+	border-top-style: solid;
+	border-left-style: solid;
+	border-top-color: var(--grid-line-light);
+	border-left-color: var(--grid-line-light);
+}
+
+.solid-grid .grid-cell.right-edge {
+	border-right-style: solid;
+	border-right-color: var(--grid-line-light);
+}
+
+.solid-grid .grid-cell.bottom-edge {
+	border-bottom-style: solid;
+	border-bottom-color: var(--grid-line-light);
 }
 
 @media (max-width: 680px) {
@@ -188,19 +209,19 @@ body {
 	.grid-cell {
 		border-top-style: solid;
 		border-left-style: solid;
-		border-top-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
-		border-left-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
+		border-top-color: var(--grid-line-light);
+		border-left-color: var(--grid-line-light);
 	}
 
-	.grid-cell:nth-child(50n) {
+	.grid-cell.right-edge {
 		border-right-style: solid;
-		border-right-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
+		border-right-color: var(--grid-line-light);
 		width: calc(100% + 1px);
 	}
 
-	.grid-cell:nth-child(n + 3251) {
+	.grid-cell.bottom-edge {
 		border-bottom-style: solid;
-		border-bottom-color: color-mix(in srgb, var(--grid-line) 65%, transparent);
+		border-bottom-color: var(--grid-line-light);
 		height: calc(100% + 1px);
 	}
 }
@@ -436,38 +457,34 @@ body.dragging * {
 	}
 
 	html, body {
-		position: static !important;
-		width: auto !important;
-		height: auto !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		width: 100% !important;
+		height: 100vh !important;
 		overflow: visible !important;
 	}
 
 	body {
-		background: var(--white);
-		padding: 0;
-		margin: 0;
-		display: block;
-		align-items: initial;
-		justify-content: initial;
-	}
-
-	.page {
-		width: 8.5in !important;
-		max-width: 8.5in !important;
-		height: 11in !important;
-		box-shadow: none;
-		margin: 0;
-		padding: 0;
 		background: var(--white);
 		display: flex !important;
 		align-items: center !important;
 		justify-content: center !important;
 	}
 
+	.page {
+		width: auto !important;
+		height: auto !important;
+		max-width: none !important;
+		box-shadow: none;
+		margin: 0;
+		padding: 0;
+		background: var(--white);
+		display: block !important;
+	}
+
 	.grid {
-		/* Use fixed dimensions for print: 50 cells * 4mm = 200mm, 66 cells * 4mm = 264mm */
-		width: 200mm !important;
-		height: 264mm !important;
+		width: calc(var(--grid-cols) * var(--cell-size-mm)) !important;
+		height: calc(var(--grid-rows) * var(--cell-size-mm)) !important;
 		display: grid;
 		grid-template-columns: repeat(var(--grid-cols), 1fr) !important;
 		grid-template-rows: repeat(var(--grid-rows), 1fr) !important;
@@ -485,12 +502,12 @@ body.dragging * {
 		padding: 0 !important;
 	}
 
-	.grid-cell:nth-child(50n) {
+	.grid-cell.right-edge {
 		border-right: 1px dashed var(--default-grid) !important;
 		width: calc(100% + 1px) !important;
 	}
 
-	.grid-cell:nth-child(n + 3251) {
+	.grid-cell.bottom-edge {
 		border-bottom: 1px dashed var(--default-grid) !important;
 		height: calc(100% + 1px) !important;
 	}
@@ -539,10 +556,13 @@ body.dragging * {
 	.add-images-btn {
 		display: none !important;
 	}
+
+	.popup-notification {
+		display: none !important;
+	}
 }
 
 @page {
-	size: 8.5in 11in;
 	margin: 0;
 }
 
@@ -558,7 +578,6 @@ body.dragging * {
 	border-radius: 100px;
 	padding: 14px 28px;
 	font-size: 16px;
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 	font-weight: 600;
 	cursor: pointer;
 	box-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -585,4 +604,35 @@ body.dragging * {
 	.image-container.dragging {
 		opacity: 1;
 	}
+}
+
+.popup-notification {
+	position: fixed;
+	bottom: 2rem;
+	left: 50%;
+	transform: translateX(-50%);
+	background-color: var(--accent);
+	color: var(--page);
+	padding: 0.7rem 0.9rem;
+	border-radius: 50rem;
+	font-size: 1.2rem;
+	text-align: center;
+	white-space: nowrap;
+	user-select: none;
+	width: fit-content;
+	height: fit-content;
+	opacity: 0;
+	pointer-events: none;
+	z-index: 10000;
+}
+
+.popup-notification.show {
+	opacity: 1;
+	transition: none;
+}
+
+.popup-notification.fade-out {
+	opacity: 0;
+	filter: blur(4px);
+	transition: opacity 1.5s ease-out, filter 1.5s ease-out;
 }

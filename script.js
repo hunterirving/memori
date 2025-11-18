@@ -1,8 +1,94 @@
-const GRID_COLS = 50;
-const GRID_ROWS = 66;
+// Paper dimensions in mm
+const LETTER_WIDTH_MM = 215.9;  // 8.5 inches
+const LETTER_HEIGHT_MM = 279.4; // 11 inches
+const A4_WIDTH_MM = 210;
+const A4_HEIGHT_MM = 297;
+const MARGIN_MM = 6.35; // 0.25 inches
+
+// Calculate maximum grid dimensions that fit both Letter and A4 with margins
+function calculateGridDimensions(cellSize) {
+	// Available printable area (limiting factor is the smaller of Letter/A4 for each dimension)
+	const availableWidth = Math.min(LETTER_WIDTH_MM, A4_WIDTH_MM) - (2 * MARGIN_MM);
+	const availableHeight = Math.min(LETTER_HEIGHT_MM, A4_HEIGHT_MM) - (2 * MARGIN_MM);
+
+	// Calculate how many cells fit
+	const cols = Math.floor(availableWidth / cellSize);
+	const rows = Math.floor(availableHeight / cellSize);
+
+	return { cols, rows };
+}
+
+// Calculate grid dimensions as percentage of Letter paper (used for screen layout)
+function calculateGridPercentages(cellSize, cols, rows) {
+	const gridWidthMM = cols * cellSize;
+	const gridHeightMM = rows * cellSize;
+	return {
+		widthPercent: (gridWidthMM / LETTER_WIDTH_MM) * 100,
+		heightPercent: (gridHeightMM / LETTER_HEIGHT_MM) * 100
+	};
+}
+
+// Cell size bounds (in mm)
+const MIN_CELL_SIZE_MM = 2;
+const MAX_CELL_SIZE_MM = 10;
+
+let GRID_COLS = 49;
+let GRID_ROWS = 66;
+let CELL_SIZE_MM = 4; // Physical size of each cell when printed (can be overridden by URL parameter)
 
 const grid = document.getElementById('grid');
 const page = document.querySelector('.page');
+
+let popupElement = null;
+let popupTimeout = null;
+
+// Parse URL parameters for custom cell size
+function parseCellSizeFromURL() {
+	const urlParams = new URLSearchParams(window.location.search);
+	const gridSizeParam = urlParams.get('grid-size');
+
+	if (gridSizeParam) {
+		// Remove 'mm' suffix if present
+		const sizeStr = gridSizeParam.toLowerCase().replace('mm', '').trim();
+		const size = parseFloat(sizeStr);
+
+		// Check if size is valid
+		if (isNaN(size)) {
+			showPopup('Invalid grid size. Using default 4mm.', 3000);
+			return 4;
+		}
+
+		// Check if size is within reasonable bounds
+		if (size < MIN_CELL_SIZE_MM || size > MAX_CELL_SIZE_MM) {
+			showPopup(`Grid size must be between ${MIN_CELL_SIZE_MM}mm and ${MAX_CELL_SIZE_MM}mm. Using default 4mm.`, 3500);
+			return 4;
+		}
+
+		// Valid size
+		showPopup(`Grid set to ${size}mm`);
+		return size;
+	}
+
+	return 4; // Default
+}
+
+// Initialize cell size from URL
+CELL_SIZE_MM = parseCellSizeFromURL();
+
+// Calculate grid dimensions based on cell size
+const gridDimensions = calculateGridDimensions(CELL_SIZE_MM);
+GRID_COLS = gridDimensions.cols;
+GRID_ROWS = gridDimensions.rows;
+
+// Calculate grid percentages for screen layout
+const gridPercentages = calculateGridPercentages(CELL_SIZE_MM, GRID_COLS, GRID_ROWS);
+
+// Update CSS variables for both screen and print
+document.documentElement.style.setProperty('--cell-size-mm', `${CELL_SIZE_MM}mm`);
+document.documentElement.style.setProperty('--grid-cols', GRID_COLS);
+document.documentElement.style.setProperty('--grid-rows', GRID_ROWS);
+document.documentElement.style.setProperty('--grid-width-percent', `${gridPercentages.widthPercent}%`);
+document.documentElement.style.setProperty('--grid-height-percent', `${gridPercentages.heightPercent}%`);
 
 // Calculate cell size dynamically based on actual grid dimensions
 function getCellSize() {
@@ -74,7 +160,25 @@ function getPixelPerfectBounds(cellX, cellY, cellWidth, cellHeight) {
 for (let i = 0; i < GRID_COLS * GRID_ROWS; i++) {
 	const cell = document.createElement('div');
 	cell.className = 'grid-cell';
+
+	// Add right border to rightmost column
+	const col = i % GRID_COLS;
+	if (col === GRID_COLS - 1) {
+		cell.classList.add('right-edge');
+	}
+
+	// Add bottom border to bottom row
+	const row = Math.floor(i / GRID_COLS);
+	if (row === GRID_ROWS - 1) {
+		cell.classList.add('bottom-edge');
+	}
+
 	grid.appendChild(cell);
+}
+
+// Apply solid border style for grids 3.56mm or smaller
+if (CELL_SIZE_MM <= 3.56) {
+	document.documentElement.classList.add('solid-grid');
 }
 
 let images = [];
@@ -958,7 +1062,7 @@ window.addEventListener('resize', () => {
 });
 
 // Adjust image scales for print and restore after
-const PRINT_CELL_SIZE_PX = 4 * 96 / 25.4; // 4mm in pixels at 96 DPI
+const PRINT_CELL_SIZE_PX = CELL_SIZE_MM * 96 / 25.4; // Cell size in pixels at 96 DPI
 
 window.addEventListener('beforeprint', () => {
 	images.forEach(img => {
@@ -993,7 +1097,7 @@ window.addEventListener('afterprint', () => {
 // Theme system
 let currentThemeIndex = 0;
 let isF2Pressed = false;
-const themes = ['sea-breeze', 'grape-soda', 'grapefruit', 'guac', 'mojito', 'toast'];
+const themes = ['sea-breeze', 'grape-soda', 'grapefruit', 'guac', 'mojito', 'banana'];
 
 function setTheme(theme) {
 	document.documentElement.setAttribute('data-theme', theme);
@@ -1064,3 +1168,22 @@ fileInput.addEventListener('change', async (e) => {
 	// Clear the input so the same files can be selected again
 	fileInput.value = '';
 });
+
+function showPopup(message, displayDuration = 1250) {
+	if (!popupElement) {
+		popupElement = document.createElement('div');
+		popupElement.className = 'popup-notification';
+		document.body.appendChild(popupElement);
+	}
+
+	if (popupTimeout) clearTimeout(popupTimeout);
+
+	popupElement.textContent = message;
+	popupElement.classList.remove('fade-out');
+	popupElement.classList.add('show');
+
+	popupTimeout = setTimeout(() => {
+		popupElement.classList.remove('show');
+		popupElement.classList.add('fade-out');
+	}, displayDuration);
+}
