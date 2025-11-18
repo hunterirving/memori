@@ -20,8 +20,6 @@ Two tiny problems with this:
 So here's a web app that does the same thing (and then some) for free.
 
 ## usage
-<img src="readme_images/usage.gif">
-
 Different Techo types use differently-sized grid paper. Use the links below to select the appropriate grid size for your Techo.
 
 | <b>Techo</b> | <b>Link</b> |
@@ -29,8 +27,6 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 | Planner A6 | [Use 4mm grid ↗](https://hunterirving.github.io/memori?grid-size=4mm)<br>(default) |
 | Original<br>Cousin<br>HON A6<br>HON A5<br>Original Avec<br>Cousin Avec<br>5-Year Techo A6<br>5-Year Techo A5<br>Day-Free A6<br>Day-Free A5 | [Use 3.7mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.7mm) |
 | Weeks<br>Weeks Mega | [Use 3.55mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.55mm) |
-
-
 
 ### controls
 
@@ -48,8 +44,8 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 	- or, when using a mouse, scale with `ctrl + scroll`
 
 - hover an image and drag with two fingers to pan (set the "crop" - the part of the image that's visible)<br>
-<img src="readme_images/crop.gif">
-	- when using a mouse, hover an image and `scroll` to pan vertically, or use `shift + scroll` to pan horizontally
+<img src="readme_images/pan.gif">
+	- or, when using a mouse, hover an image and `scroll` to pan vertically, or use `shift + scroll` to pan horizontally
 
 - ```⌘ + click``` an image to duplicate it<br>
 <img src="readme_images/duplicate.gif">
@@ -60,19 +56,19 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 - ```shift + click``` an image to delete it<br>
 <img src="readme_images/delete.gif">
 
-- press ```F2``` to select from one of six user interface themes<br>
+- press ```F2``` to select from one of six user interface themes (you may also have to hold ```FN```)<br>
 <img src="readme_images/select_theme.gif">
 
-Once you've filled out the page, press ```⌘ + P``` to print using your system's default print dialog:
+Once you've filled out the page, press ```⌘ + P``` to print using your system's default print dialog.
 <br>
-<img src="readme_images/print.gif">
-
-<img src="readme_images/printed.jpg" height=400px>
 
 >[!TIP]
 >For best results...
 >- select "Scale: 100%" rather than "Fit to page width"
->- set Margins to None or 0
+>- set Margins to None or 0<br>
+> <img src="readme_images/print_options.png" width=200px>
+
+<img src="readme_images/printed.jpg" height=450px>
 
 Use a hobby knife and straightedge (or regular old scissors) to cut your images to size:
 
