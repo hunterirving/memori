@@ -40,12 +40,13 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 <img src="readme_images/resize.gif">
 
 - hover an image and pinch to scale (on supported trackpads)<br>
-	- or, when using a mouse, scale with `ctrl + scroll`
+	- or, when using a mouse, scale with `ctrl + scroll`<br>
 <img src="readme_images/scale.gif">
 
 - hover an image and drag with two fingers to pan (set the "crop" - the part of the image that's visible)<br>
-<img src="readme_images/pan.gif">
-	- or, when using a mouse, hover an image and `scroll` to pan vertically, or use `shift + scroll` to pan horizontally
+	- or, when using a mouse, hover an image and `scroll` to pan vertically, or use `shift + scroll` to pan horizontally<br>
+	<img src="readme_images/pan.gif">
+
 
 - ```⌘ + click``` an image to duplicate it<br>
 <img src="readme_images/duplicate.gif">
