@@ -8,7 +8,7 @@ This year, Hobonichi announced an official <a href="https://techoapp.1101.com/en
 Two tiny problems with this:
 <ol>
 	<li>
-		The app is Japan-exclusive until December 2025
+		The app is Japan-exclusive until January 2026
 	</li>
 	<li>
 		The Memory Print feature requires a <a href="https://techoapp.1101.com/en/premium/">paid subscription</a>:
@@ -40,7 +40,7 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 <img src="readme_images/resize.gif">
 
 - hover an image and pinch to scale (on supported trackpads)<br>
-	- or, when using a mouse, scale with `ctrl + scroll`<br>
+	- or, when using a mouse, scale with `ctrl + scrollwheel`<br>
 <img src="readme_images/scale.gif">
 
 - hover an image and drag with two fingers to pan (set the "crop" - the part of the image that's visible)<br>
