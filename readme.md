@@ -57,7 +57,7 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 - ```shift + click``` an image to delete it<br>
 <img src="readme_images/delete.gif">
 
-- press ```F2``` to select from one of six user interface themes (you may also have to hold ```FN```)<br>
+- press ```F2``` to select from one of six user interface themes (you may also have to hold ```Fn```)<br>
 <img src="readme_images/select_theme.gif">
 
 Once you've filled out the page, press ```⌘ + P``` to print using your system's default print dialog.
