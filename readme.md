@@ -1,5 +1,5 @@
 # memori ✂️
-The Hobonichi Techo is a "<a href="https://www.1101.com/store/techo/en/about/">Life Book</a>" with one page for each day of the year. I use mine as a daily planner, journal, and sketchbook.
+The Hobonichi Techo is a <a href="https://www.1101.com/store/techo/en/about/">Life Book</a> with one page for each day of the year. I use mine as a daily planner, journal, and sketchbook.
 
 This year, Hobonichi announced an official <a href="https://techoapp.1101.com/en/">Hobonichi Techo App</a>, which, among other features, lets users print photos that are perfectly sized to fit the Techo's grid paper.
 
@@ -8,7 +8,7 @@ This year, Hobonichi announced an official <a href="https://techoapp.1101.com/en
 Two tiny problems with this:
 <ol>
 	<li>
-		The app is Japan-exclusive until January 2026
+		The app is Japan-exclusive until "late January 2026"
 	</li>
 	<li>
 		The Memory Print feature requires a <a href="https://techoapp.1101.com/en/premium/">paid subscription</a>:
