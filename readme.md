@@ -25,6 +25,9 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 | Original<br>Cousin<br>HON A6<br>HON A5<br>Original Avec<br>Cousin Avec<br>5-Year Techo A6<br>5-Year Techo A5<br>Day-Free A6<br>Day-Free A5 | [Use 3.7mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.7mm) |
 | Weeks<br>Weeks Mega | [Use 3.55mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.55mm) |
 
+> [!IMPORTANT]
+> Printing from Safari is not currently supported. Please use Firefox or Chrome instead.
+
 ### controls
 
 - After opening memori in your web browser, drag one or more images from your desktop onto the grid.<br>
