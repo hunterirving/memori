@@ -36,7 +36,7 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 - resize images using the edge/corner resize handles<br>
 <img src="readme_images/resize.gif">
 
-- hover an image and pinch to scale (on supported trackpads)<br>
+- hover an image and pinch with two fingers to scale (on supported trackpads)<br>
 	- or, when using a mouse, scale with `ctrl + scrollwheel`<br>
 <img src="readme_images/scale.gif">
 
