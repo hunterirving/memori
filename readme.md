@@ -8,7 +8,7 @@ This year, Hobonichi announced an official <a href="https://techoapp.1101.com/en
 One tiny problem with this:
 <ul>
 	<li>
-		The Memory Print feature requires a <a href="https://techoapp.1101.com/en/premium/">paid subscription</a>:
+		The Memory Print feature requires a <a href="https://techoapp.1101.com/en/premium/">paid subscription</a>.
 	</li>
 </ul>
 
