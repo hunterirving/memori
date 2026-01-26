@@ -25,12 +25,12 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 | Original<br>Cousin<br>HON A6<br>HON A5<br>Original Avec<br>Cousin Avec<br>5-Year Techo A6<br>5-Year Techo A5<br>Day-Free A6<br>Day-Free A5 | [Use 3.7mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.7mm) |
 | Weeks<br>Weeks Mega | [Use 3.55mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.55mm) |
 
-> [!IMPORTANT]
+> [!NOTE]
 > Printing from Safari is not currently supported. Please use Firefox or Chrome instead.
 
 ### controls
 
-- After opening memori in your web browser, drag one or more images from your desktop onto the grid.<br>
+- after opening memori in your web browser, drag one or more images from your desktop onto the grid.<br>
 <img src="readme_images/drag_n_drop.gif">
 
 - click and drag images to move them<br>
@@ -44,7 +44,7 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 <img src="readme_images/scale.gif">
 
 - hover an image and drag with two fingers to pan (set the "crop" - the part of the image that's visible)<br>
-	- or, when using a mouse, hover an image and `scroll` to pan vertically, or use `shift + scroll` to pan horizontally<br>
+	- or, when using a mouse, hover an image and use the `scrollwheel` to pan vertically, or use `shift + scrollwheel` to pan horizontally<br>
 <img src="readme_images/pan.gif">
 
 
@@ -61,6 +61,7 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 <img src="readme_images/select_theme.gif">
 
 Once you've filled out the page, press ```⌘ + P``` to print using your system's default print dialog.
+<br>Printing from Safari is not currently supported. Please use Firefox or Chrome instead.
 <br>
 
 >[!TIP]
@@ -71,7 +72,7 @@ Once you've filled out the page, press ```⌘ + P``` to print using your system'
 
 <img src="readme_images/printed.jpg" width=400px>
 
-Use a hobby knife and straightedge (or regular old scissors) to cut your images to size:
+Use scissors (or a hobby knife) to cut your images to size:
 
 <img src="readme_images/cut_out.jpg" width=400px>
 
