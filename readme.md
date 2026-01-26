@@ -5,15 +5,12 @@ This year, Hobonichi announced an official <a href="https://techoapp.1101.com/en
 
 <img src="readme_images/cut_and_paste.jpg" width=400px><br>
 
-Two tiny problems with this:
-<ol>
-	<li>
-		The app is Japan-exclusive until "late January 2026"
-	</li>
+One tiny problem with this:
+<ul>
 	<li>
 		The Memory Print feature requires a <a href="https://techoapp.1101.com/en/premium/">paid subscription</a>:
 	</li>
-</ol>
+</ul>
 
 <a href="https://techoapp.1101.com/en/premium/"><img src="readme_images/premium_plan.jpg" width=500px></a>
 
