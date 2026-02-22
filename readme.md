@@ -24,6 +24,7 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 | Planner A6 | [Use 4mm grid ↗](https://hunterirving.github.io/memori?grid-size=4mm)<br>(default) |
 | Original<br>Cousin<br>HON A6<br>HON A5<br>Original Avec<br>Cousin Avec<br>5-Year Techo A6<br>5-Year Techo A5<br>Day-Free A6<br>Day-Free A5 | [Use 3.7mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.7mm) |
 | Weeks<br>Weeks Mega | [Use 3.55mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.55mm) |
+| Other planners | Add a "grid-size" parameter to the url like so:<br>https://hunterirving.github.io/memori/?grid-size=5mm<br>This value can be anywhere between 2mm and 10mm. |
 
 > [!IMPORTANT]
 > Printing from Safari is not currently supported. Please use Firefox or Chrome instead.
