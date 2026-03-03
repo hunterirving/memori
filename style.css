@@ -228,7 +228,7 @@ body {
 
 .image-container {
 	position: absolute;
-	cursor: move;
+	cursor: grab;
 	outline: 2px solid transparent;
 	outline-offset: -2px;
 	transition: outline-color 0.2s;

@@ -532,8 +532,7 @@ function setupImageHandlers(imageData) {
 		// Clear any existing timers from other images
 		clearDragState();
 
-		// Lock cursor to move during drag operation
-		document.body.style.cursor = 'move';
+		document.body.style.cursor = 'grabbing';
 		document.body.classList.add('dragging');
 
 		dragState = {
