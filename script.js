@@ -845,11 +845,11 @@ function setupImageHandlers(imageData) {
 
 	// Pan and Zoom with wheel events (macOS trackpad gestures)
 	container.addEventListener('wheel', (e) => {
-		// Don't interfere with dragging or resizing
-		if (dragState || resizeState) return;
-
 		e.preventDefault();
 		e.stopPropagation();
+
+		// Don't interfere with dragging or resizing
+		if (dragState || resizeState) return;
 
 		// Detect pinch zoom (ctrlKey is set for pinch gestures on macOS trackpad)
 		if (e.ctrlKey) {
@@ -1066,6 +1066,14 @@ document.addEventListener('touchcancel', () => {
 		longPressTimer = null;
 	}
 });
+
+// Intercept wheel events at the document level to prevent page scroll/zoom when the cursor is over an image container.
+document.addEventListener('wheel', (e) => {
+	const hoveredImage = images.find(img => img.container.contains(e.target) || img.container === e.target);
+	if (hoveredImage) {
+		e.preventDefault();
+	}
+}, { passive: false });
 
 // Update all image positions when window resizes (for responsive scaling)
 window.addEventListener('resize', () => {
