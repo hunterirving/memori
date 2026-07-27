@@ -62,24 +62,17 @@ function parseCellSizeFromURL() {
 
 		// Check if size is valid
 		if (isNaN(size)) {
-			if (!isUsingSafari) {
-				showPopup('Invalid grid size. Using default 4mm.', 3000);
-			}
+			showPopup('Invalid grid size. Using default 4mm.', 3000);
 			return 4;
 		}
 
 		// Check if size is within reasonable bounds
 		if (size < MIN_CELL_SIZE_MM || size > MAX_CELL_SIZE_MM) {
-			if (!isUsingSafari) {
-				showPopup(`Grid size must be between ${MIN_CELL_SIZE_MM}mm and ${MAX_CELL_SIZE_MM}mm. Using default 4mm.`, 3500);
-			}
+			showPopup(`Grid size must be between ${MIN_CELL_SIZE_MM}mm and ${MAX_CELL_SIZE_MM}mm. Using default 4mm.`, 3500);
 			return 4;
 		}
 
-		// Valid size - only show popup if not Safari
-		if (!isUsingSafari) {
-			showPopup(`Grid set to ${size}mm`);
-		}
+		showPopup(`Grid set to ${size}mm`);
 		return size;
 	}
 
@@ -316,7 +309,7 @@ document.addEventListener('paste', async (e) => {
 	}
 
 	if (imageFiles.length === 0) {
-		if (!isUsingSafari) showPopup('No image found in clipboard');
+		showPopup('No image found in clipboard');
 		return;
 	}
 
@@ -1204,15 +1197,6 @@ document.addEventListener('keyup', (e) => {
 
 // Load theme on page load
 loadThemeFromLocalStorage();
-
-// Show Safari warning if applicable
-if (isUsingSafari) {
-	const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-	const safariMessage = isMobile
-		? 'Printing from Safari is not currently supported.'
-		: 'Printing from Safari is not currently supported. Please use Firefox or Chrome instead.';
-	showPopup(safariMessage, 5000);
-}
 
 // Warn before leaving page if images are present
 window.addEventListener('beforeunload', (e) => {

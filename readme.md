@@ -26,9 +26,6 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 | Weeks<br>Weeks Mega | [Use 3.55mm grid ↗](https://hunterirving.github.io/memori?grid-size=3.55mm) |
 | Other planners | Add a "grid-size" parameter to the url like so:<br><a href="https://hunterirving.github.io/memori/?grid-size=5mm">https://<area>hunterirving.github.io/memori/<b>?grid-size=5mm</b></a><br>This value can be anywhere between 2mm and 10mm. |
 
-> [!IMPORTANT]
-> Printing from Safari is not currently supported. Please use Firefox or Chrome instead.
-
 ### controls
 
 - after opening memori in your web browser, drag one or more images from your desktop onto the grid (or press `⌘ + v` to paste image data from your clipboard)<br>
@@ -61,7 +58,10 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 - press ```F2``` to select from one of six user interface themes (you may also have to hold ```Fn```)<br>
 <img src="readme_images/select_theme.gif">
 
-Once you've filled out the page, press ```⌘ + P``` to print using your system's default print dialog.
+Once you've filled out the page, press ```⌘ + P``` to print using your system's default print dialog <small>(in Safari, this will open a formatted PDF in a new tab)</small>.
+<br>
+
+You can also press ```⌘ + E``` to export your work as a PDF, to print later or somewhere else.
 <br>
 
 >[!TIP]
