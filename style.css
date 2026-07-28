@@ -123,15 +123,13 @@ body {
 	display: flex;
 	justify-content: center;
 	align-items: flex-start;
+	align-items: safe center;
 	min-height: 100vh;
 	padding: 20px;
 }
 
 .page {
-	/* Scale down on narrow screens, but never larger than 8.5in */
-	max-width: min(8.5in, calc(100vw - 40px));
-	width: 100%;
-	/* Maintain 8.5:11 aspect ratio (11/8.5 = 1.294117647) */
+	width: min(100%, var(--page-width, 8.5in));
 	aspect-ratio: 8.5 / 11;
 	background: var(--page);
 	position: relative;
@@ -159,8 +157,8 @@ body {
 	width: 100%;
 	height: 100%;
 	box-sizing: border-box;
-	border-top: 1px dashed var(--grid-line);
-	border-left: 1px dashed var(--grid-line);
+	border-top: var(--line-width, 1px) dashed var(--grid-line);
+	border-left: var(--line-width, 1px) dashed var(--grid-line);
 	margin: 0;
 	padding: 0;
 	display: block;
@@ -168,14 +166,14 @@ body {
 
 /* Add right border to rightmost column */
 .grid-cell.right-edge {
-	border-right: 1px dashed var(--grid-line);
-	width: calc(100% + 1px);
+	border-right: var(--line-width, 1px) dashed var(--grid-line);
+	width: calc(100% + var(--line-width, 1px));
 }
 
 /* Add bottom border to bottom row */
 .grid-cell.bottom-edge {
-	border-bottom: 1px dashed var(--grid-line);
-	height: calc(100% + 1px);
+	border-bottom: var(--line-width, 1px) dashed var(--grid-line);
+	height: calc(100% + var(--line-width, 1px));
 }
 
 /* Solid grid lines for cell sizes <= 3.56mm (screen preview only) */
@@ -202,7 +200,6 @@ body {
 	}
 
 	.page {
-		max-width: 100vw;
 		box-shadow: none;
 	}
 
@@ -216,13 +213,13 @@ body {
 	.grid-cell.right-edge {
 		border-right-style: solid;
 		border-right-color: var(--grid-line-light);
-		width: calc(100% + 1px);
+		width: calc(100% + var(--line-width, 1px));
 	}
 
 	.grid-cell.bottom-edge {
 		border-bottom-style: solid;
 		border-bottom-color: var(--grid-line-light);
-		height: calc(100% + 1px);
+		height: calc(100% + var(--line-width, 1px));
 	}
 }
 
