@@ -1,20 +1,6 @@
 # memori ✂️
-The Hobonichi Techo is a <a href="https://www.1101.com/store/techo/en/about/">Life Book</a> with one page for each day of the year. I use mine as a daily planner, journal, and sketchbook.
 
-This year, Hobonichi announced an official <a href="https://techoapp.1101.com/en/">Hobonichi Techo App</a>, which, among other features, lets users print photos that are perfectly sized to fit the Techo's grid paper.
-
-<img src="readme_images/cut_and_paste.jpg" width=400px><br>
-
-One tiny problem with this:
-<ul>
-	<li>
-		The Memory Print feature requires a <a href="https://techoapp.1101.com/en/premium/">paid subscription</a>.
-	</li>
-</ul>
-
-<a href="https://techoapp.1101.com/en/premium/"><img src="readme_images/premium_plan.jpg" width=500px></a>
-
-So here's a web app that does the same thing (and then some) for free.
+A free photo-printing tool that perfectly sizes images to fit the <a href="https://www.1101.com/store/techo/en/about/">Hobonichi Techo</a>'s grid paper.
 
 ## usage
 Different Techo types use differently-sized grid paper. Use the links below to select the appropriate grid size for your Techo:

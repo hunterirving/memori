@@ -6,7 +6,7 @@
 	<meta name="theme-color" content="#a3d5ff">
 	<title>memori</title>
 	<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>">
-	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="resources/style.css">
 </head>
 <body>
 	<div class="page">
@@ -16,7 +16,16 @@
 	<input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
 	<button id="addImagesBtn" class="add-images-btn">Add images</button>
 
-	<script src="script.js"></script>
-	<script src="pdf.js"></script>
+	<!-- Loaded in dependency order: each file runs setup at load and reads the ones above it -->
+	<script src="resources/popup.js"></script>
+	<script src="resources/grid.js"></script>
+	<script src="resources/display.js"></script>
+	<script src="resources/images.js"></script>
+	<script src="resources/pointer.js"></script>
+	<script src="resources/input.js"></script>
+	<script src="resources/print.js"></script>
+	<script src="resources/theme.js"></script>
+	<script src="resources/app.js"></script>
+	<script src="resources/pdf.js"></script>
 </body>
 </html>

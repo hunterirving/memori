@@ -1,3 +1,5 @@
+// Self-contained PDF writer: vector grid plus embedded photos, for export and Safari printing
+
 (function () {
 	var MM = 72 / 25.4;         // mm -> PDF points
 	var DPI = 600;              // photo raster resolution
