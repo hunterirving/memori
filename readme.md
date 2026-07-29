@@ -44,7 +44,7 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 - press ```F2``` to select from one of six user interface themes (you may also have to hold ```Fn```)<br>
 <img src="readme_images/select_theme.gif">
 
-Once you've filled out the page, press ```⌘ + P``` to print using your system's default print dialog <small>(in Safari, this will open a formatted PDF in a new tab)</small>.
+Once you've filled out the page, press ```⌘ + P``` to print using your system's default print dialog (in Safari, this will open a formatted PDF in a new tab).
 <br>
 
 You can also press ```⌘ + E``` to export your work as a PDF, to print later or somewhere else.
