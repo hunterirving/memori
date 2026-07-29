@@ -5,11 +5,21 @@ const themes = ['sea-breeze', 'grape-soda', 'grapefruit', 'guac', 'mojito', 'ban
 const DEFAULT_THEME = 'guac';
 const DEFAULT_DARK_THEME = 'pantry';
 
-function setTheme(theme) {
-	document.documentElement.setAttribute('data-theme', theme);
+function syncThemeColorMeta() {
 	const backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--desk').trim();
 	document.querySelector('meta[name="theme-color"]').setAttribute('content', backgroundColor);
 }
+
+function setTheme(theme) {
+	document.documentElement.setAttribute('data-theme', theme);
+	syncThemeColorMeta();
+}
+
+document.documentElement.addEventListener('transitionend', (e) => {
+	if (e.propertyName === '--desk') {
+		syncThemeColorMeta();
+	}
+});
 
 function cycleTheme() {
 	currentThemeIndex = (currentThemeIndex + 1) % themes.length;

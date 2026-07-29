@@ -1,3 +1,29 @@
+/* Registered so theme swaps can be transitioned — plain custom properties don't animate.
+   Everything downstream (borders, color-mix, scrollbars) follows for free. */
+@property --desk {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: #7a8520;
+}
+
+@property --page {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: #fefef4;
+}
+
+@property --grid-line {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: #a9cf51;
+}
+
+@property --accent {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: #a81d8f;
+}
+
 :root {
 	/* Default colors */
 	--white: white;
@@ -69,6 +95,19 @@
 
 	/* Set font */
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+	--theme-transition: 250ms ease;
+	transition:
+		--desk var(--theme-transition),
+		--page var(--theme-transition),
+		--grid-line var(--theme-transition),
+		--accent var(--theme-transition);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		transition: none;
+	}
 }
 
 /* Theme definitions */
@@ -626,7 +665,7 @@ body.selecting .image-container {
 	-webkit-tap-highlight-color: transparent;
 	user-select: none;
 	-webkit-user-select: none;
-	transition: transform 0.1s ease, box-shadow 0.1s ease;
+	transition: transform 0.1s ease, box-shadow 0.1s ease, color var(--theme-transition);
 }
 
 .add-images-btn:active {
