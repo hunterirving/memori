@@ -245,7 +245,7 @@ body {
 	cursor: grab;
 	outline: 2px solid transparent;
 	outline-offset: -2px;
-	transition: outline-color 0.2s;
+	transition: outline-color 0.2s, opacity 0.05s ease;
 	background: var(--page);
 	touch-action: none;
 }
