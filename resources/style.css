@@ -41,6 +41,12 @@
 	--horizon: #85c0f5;
 	--lagoon: #2196f3;
 
+	/* pantry theme colors */
+	--cocoa: #1b1313;
+	--nori: #003731;
+	--pesto: #226f33;
+	--beet: #950641;
+
 	--grid-cols: 49;
 	--grid-rows: 66;
 	--cell-size-mm: 4mm;
@@ -51,12 +57,12 @@
 	--grid-width-percent: 90.78%;
 	--grid-height-percent: 94.48%;
 
-	/* Default theme (sea-breeze) */
-	--desk: var(--cerulean);
-	--page: var(--mist);
-	--grid-line: var(--horizon);
+	/* Default theme (guac) */
+	--desk: var(--avocado);
+	--page: var(--garlic);
+	--grid-line: var(--lime);
 	--grid-line-light: color-mix(in srgb, var(--grid-line) 65%, transparent);
-	--accent: var(--lagoon);
+	--accent: var(--onion);
 
 	/* Set text color for all themes */
 	color: var(--white);
@@ -106,6 +112,18 @@
 	--page: var(--mist);
 	--grid-line: var(--horizon);
 	--accent: var(--lagoon);
+}
+
+:root[data-theme="pantry"] {
+	--desk: var(--cocoa);
+	--page: var(--nori);
+	--grid-line: var(--pesto);
+	--accent: var(--beet);
+
+	& .add-images-btn,
+	& .popup-notification {
+		color: var(--white);
+	}
 }
 
 * {

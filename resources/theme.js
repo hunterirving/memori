@@ -1,7 +1,9 @@
 // Theme system
 let currentThemeIndex = 0;
 let isF2Pressed = false;
-const themes = ['sea-breeze', 'grape-soda', 'grapefruit', 'guac', 'mojito', 'banana'];
+const themes = ['sea-breeze', 'grape-soda', 'grapefruit', 'guac', 'mojito', 'banana', 'pantry'];
+const DEFAULT_THEME = 'guac';
+const DEFAULT_DARK_THEME = 'pantry';
 
 function setTheme(theme) {
 	document.documentElement.setAttribute('data-theme', theme);
@@ -26,8 +28,10 @@ function loadThemeFromLocalStorage() {
 		currentThemeIndex = themes.indexOf(savedTheme);
 		setTheme(savedTheme);
 	} else {
-		// Use default theme
-		setTheme(themes[0]);
+		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+		const theme = prefersDark ? DEFAULT_DARK_THEME : DEFAULT_THEME;
+		currentThemeIndex = themes.indexOf(theme);
+		setTheme(theme);
 	}
 }
 
