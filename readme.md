@@ -31,7 +31,6 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 	- or, when using a mouse, hover an image and use the `scrollwheel` to pan vertically, or use `shift + scrollwheel` to pan horizontally<br>
 <img src="readme_images/pan.gif">
 
-
 - ```⌘ + click``` an image to duplicate it<br>
 <img src="readme_images/duplicate.gif">
 
@@ -40,6 +39,8 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 
 - ```shift + click``` an image to delete it<br>
 <img src="readme_images/delete.gif">
+
+- click an empty part of the grid and drag to select multiple images at once, then move, duplicate, rotate, or delete them as a group
 
 - press ```F2``` to select from one of seven user interface themes (you may also have to hold ```Fn```)<br>
 <img src="readme_images/select_theme.gif">

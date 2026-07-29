@@ -172,6 +172,89 @@ function addImage(src, xCell, yCell, widthCells, heightCells) {
 	return imageData;
 }
 
+// Rotate one or more images 90° clockwise about the center of their bounding box,
+// preserving layout; silently ignored when the turned block can't fit the grid at all
+function rotateImages(group) {
+	const minX = Math.min(...group.map(img => img.xCell));
+	const minY = Math.min(...group.map(img => img.yCell));
+	const maxX = Math.max(...group.map(img => img.xCell + img.widthCells));
+	const maxY = Math.max(...group.map(img => img.yCell + img.heightCells));
+	const width = maxX - minX;
+	const height = maxY - minY;
+
+	// Half-cell centers must snap to the grid; rounding away from zero keeps the offset
+	// symmetric, so four turns land back where they started
+	const offset = Math.sign(width - height) * Math.round(Math.abs(width - height) / 2);
+	const left = minX + offset;
+	const top = minY - offset;
+
+	const placed = group.map(img => ({
+		img,
+		xCell: left + height - (img.yCell - minY) - img.heightCells,
+		yCell: top + (img.xCell - minX),
+		widthCells: img.heightCells,
+		heightCells: img.widthCells
+	}));
+
+	// The turned block occupies the old box with its dimensions swapped
+	if (height > GRID_COLS || width > GRID_ROWS) return;
+
+	// Slide the whole block back on if the turn pushed it past an edge
+	const shiftX = left < 0 ? -left : Math.min(0, GRID_COLS - (left + height));
+	const shiftY = top < 0 ? -top : Math.min(0, GRID_ROWS - (top + width));
+
+	placed.forEach(p => {
+		p.img.xCell = p.xCell + shiftX;
+		p.img.yCell = p.yCell + shiftY;
+		p.img.widthCells = p.widthCells;
+		p.img.heightCells = p.heightCells;
+		// Pan stays in the image's original coordinate system - the CSS transform applies
+		// rotation before pan, so pan is relative to the rotated image
+		p.img.rotation = (p.img.rotation + 90) % 360;
+		updateImagePosition(p.img);
+	});
+}
+
+// Copy an image (and its pan/zoom/rotation) to a new grid position
+function duplicateImage(imageData, newXCell, newYCell) {
+	const imgElement = imageData.container.querySelector('img');
+	const newImageData = addImage(
+		imgElement.src,
+		newXCell,
+		newYCell,
+		imageData.widthCells,
+		imageData.heightCells
+	);
+
+	const { panX, panY, userScale, rotation } = imageData;
+	const applySettings = () => {
+		newImageData.panX = panX;
+		newImageData.panY = panY;
+		newImageData.userScale = userScale;
+		newImageData.rotation = rotation;
+		updateImagePosition(newImageData);
+	};
+
+	// Settings can only be applied once the copy's natural dimensions are known
+	const newImg = newImageData.container.querySelector('img');
+	const originalOnload = newImg.onload;
+	newImg.onload = () => {
+		if (originalOnload) originalOnload.call(newImg);
+		applySettings();
+	};
+
+	if (newImg.complete && newImageData.naturalWidth > 0) applySettings();
+
+	return newImageData;
+}
+
+function deleteImage(imageData) {
+	const index = images.indexOf(imageData);
+	if (index > -1) images.splice(index, 1);
+	selectedImages.delete(imageData);
+	imageData.container.remove();
+}
+
 function calculatePanBounds(imageData) {
 	// Container dimensions in the current (possibly swapped) grid orientation
 	const bounds = getPixelPerfectBounds(imageData.xCell, imageData.yCell, imageData.widthCells, imageData.heightCells);

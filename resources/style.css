@@ -277,6 +277,10 @@ body {
 	border-color: var(--accent);
 }
 
+.image-container.selected::after {
+	border-color: var(--accent);
+}
+
 .image-container.dragging {
 	opacity: 0.7;
 }
@@ -326,6 +330,23 @@ body.dragging * {
 	cursor: inherit !important;
 }
 
+.selection-box {
+	position: absolute;
+	display: none;
+	background: color-mix(in srgb, var(--accent) 50%, transparent);
+	pointer-events: none;
+	z-index: 999999;
+}
+
+body.selecting,
+body.selecting * {
+	cursor: crosshair !important;
+}
+
+body.selecting .image-container {
+	pointer-events: none;
+}
+
 .image-container img {
 	position: absolute;
 	top: 50%;
@@ -345,6 +366,7 @@ body.dragging * {
 }
 
 .image-container:hover .resize-handle,
+.image-container.selected .resize-handle,
 .image-container.resizing .resize-handle {
 	opacity: 1;
 }
@@ -379,6 +401,7 @@ body.dragging * {
 }
 
 .image-container:hover .dimension-label,
+.image-container.selected .dimension-label,
 .image-container.dragging .dimension-label,
 .image-container.resizing .dimension-label {
 	opacity: 1;
@@ -539,6 +562,10 @@ body.dragging * {
 
 	.image-container::after {
 		border: none !important;
+	}
+
+	.selection-box {
+		display: none !important;
 	}
 
 	.image-container .image-wrapper {

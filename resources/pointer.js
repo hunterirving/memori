@@ -16,8 +16,17 @@ function setupImageHandlers(imageData) {
 		document.body.style.cursor = 'grabbing';
 		document.body.classList.add('dragging');
 
+		// Dragging a selected image moves the whole selection
+		const group = isSelected(imageData) ? Array.from(selectedImages) : [imageData];
+		const bounds = selectionBounds(group);
+
 		dragState = {
 			image: imageData,
+			group: group.map(img => ({ image: img, startXCell: img.xCell, startYCell: img.yCell })),
+			minDx: -bounds.minX,
+			maxDx: GRID_COLS - bounds.maxX,
+			minDy: -bounds.minY,
+			maxDy: GRID_ROWS - bounds.maxY,
 			startX: clientX,
 			startY: clientY,
 			startXCell: imageData.xCell,
@@ -29,10 +38,10 @@ function setupImageHandlers(imageData) {
 			hasMoved: false // Track if any movement has occurred
 		};
 
-		container.classList.add('dragging');
+		group.forEach(img => img.container.classList.add('dragging'));
 
-		// For touch, set up long press timer to enable pan mode
-		if (isTouch) {
+		// For touch, set up long press timer to enable pan mode (single images only)
+		if (isTouch && group.length === 1) {
 			const timerId = setTimeout(() => {
 				// Only activate pan mode if:
 				// 1. This drag state is still active
@@ -63,6 +72,8 @@ function setupImageHandlers(imageData) {
 
 		// Bring to front on touch
 		bringToFront(container);
+
+		if (!isSelected(imageData)) clearSelection();
 
 		if (e.touches.length === 1) {
 			// Single touch - start drag (or long press for pan)
@@ -183,105 +194,39 @@ function setupImageHandlers(imageData) {
 
 		e.preventDefault();
 
+		// Clicking outside the selection drops it; clicking inside acts on the whole selection
+		if (!isSelected(imageData)) clearSelection();
+		const usingSelection = isSelected(imageData);
+		const group = usingSelection ? Array.from(selectedImages) : [imageData];
+
 		// Shift-click to delete
 		if (e.shiftKey) {
-			const index = images.indexOf(imageData);
-			if (index > -1) {
-				images.splice(index, 1);
-			}
-			container.remove();
+			group.forEach(deleteImage);
 			return;
 		}
 
 		// Option-click (or Alt-click on Windows/Linux) to rotate
 		if (e.altKey) {
-			// Check if rotation would cause dimension swap and if it would fit on grid
-			const oldRotation = imageData.rotation;
-			const newRotation = (imageData.rotation + 90) % 360;
-
-			// When rotating between portrait and landscape (90° or 270°), dimensions swap
-			const willSwapDimensions = (oldRotation % 180 === 0 && newRotation % 180 !== 0) ||
-			                           (oldRotation % 180 !== 0 && newRotation % 180 === 0);
-
-			if (willSwapDimensions) {
-				// Check if swapped dimensions would fit on grid at current position
-				const newWidthCells = imageData.heightCells;
-				const newHeightCells = imageData.widthCells;
-
-				// Don't allow rotation if it would exceed grid bounds
-				if (imageData.xCell + newWidthCells > GRID_COLS ||
-				    imageData.yCell + newHeightCells > GRID_ROWS) {
-					return; // Silently ignore the rotation
-				}
-
-				// Swap width and height
-				imageData.widthCells = newWidthCells;
-				imageData.heightCells = newHeightCells;
-			}
-
-			// Rotate 90 degrees clockwise
-			imageData.rotation = newRotation;
-
-			// Don't rotate pan coordinates - they stay in the image's original coordinate system
-			// The CSS transform applies rotation before pan, so pan is relative to the rotated image
-
-			updateImagePosition(imageData);
+			rotateImages(group);
 			return;
 		}
 
 		// Cmd-click (or Ctrl-click on Windows/Linux) to duplicate
 		if (e.metaKey || e.ctrlKey) {
-			// Calculate target position (1 cell right and 1 cell down)
-			let newXCell = imageData.xCell + 1;
-			let newYCell = imageData.yCell + 1;
+			// Offset the copies 1 cell down-right, pulled back in if that would leave the grid
+			const bounds = selectionBounds(group);
+			let dx = Math.min(1, GRID_COLS - bounds.maxX);
+			let dy = Math.min(1, GRID_ROWS - bounds.maxY);
 
-			// If there's not enough room, fall back to top-left
-			if (newXCell + imageData.widthCells > GRID_COLS || newYCell + imageData.heightCells > GRID_ROWS) {
-				newXCell = 0;
-				newYCell = 0;
+			// No room to offset - fall back to the top-left corner
+			if (dx === 0 && dy === 0) {
+				dx = -bounds.minX;
+				dy = -bounds.minY;
 			}
 
-			// Create duplicate with the same image source and dimensions
-			const imgElement = container.querySelector('img');
-			const newImageData = addImage(
-				imgElement.src,
-				newXCell,
-				newYCell,
-				imageData.widthCells,
-				imageData.heightCells
-			);
-
-			// Copy pan, zoom, and rotation settings from original
-			// Store the original settings to apply after image loads
-			const originalPanX = imageData.panX;
-			const originalPanY = imageData.panY;
-			const originalUserScale = imageData.userScale;
-			const originalRotation = imageData.rotation;
-
-			// Override the onload to copy settings
-			const newImg = newImageData.container.querySelector('img');
-			const originalOnload = newImg.onload;
-			newImg.onload = () => {
-				// Run the original onload first
-				if (originalOnload) originalOnload.call(newImg);
-
-				// Then apply the copied settings
-				newImageData.panX = originalPanX;
-				newImageData.panY = originalPanY;
-				newImageData.userScale = originalUserScale;
-				newImageData.rotation = originalRotation;
-				updateImagePosition(newImageData);
-			};
-
-			// If image is already loaded (cached), trigger the settings copy
-			if (newImg.complete && newImageData.naturalWidth > 0) {
-				newImageData.panX = originalPanX;
-				newImageData.panY = originalPanY;
-				newImageData.userScale = originalUserScale;
-				newImageData.rotation = originalRotation;
-				updateImagePosition(newImageData);
-			}
-
+			const copies = group.map(img => duplicateImage(img, img.xCell + dx, img.yCell + dy));
+			// The copies land under the cursor, so they inherit the selection
+			if (usingSelection) setSelection(copies);
 			return;
 		}
 
@@ -366,8 +311,10 @@ function clearDragState() {
 		longPressTimer = null;
 	}
 	if (dragState) {
-		dragState.image.container.classList.remove('dragging');
-		dragState.image.container.classList.remove('pan-mode');
+		dragState.group.forEach(({ image }) => {
+			image.container.classList.remove('dragging');
+			image.container.classList.remove('pan-mode');
+		});
 		dragState = null;
 		document.body.style.cursor = '';
 		document.body.classList.remove('dragging');
@@ -406,24 +353,23 @@ function handleMove(clientX, clientY) {
 			clampPan(imageData);
 			updateImagePosition(imageData);
 		} else {
-			// Normal drag mode - move the image container on the grid
+			// Normal drag mode - move the image container(s) on the grid
 			const cellSize = getCellSize();
-			const dxCells = Math.round(dx / cellSize.width);
-			const dyCells = Math.round(dy / cellSize.height);
-
-			const newXCell = Math.max(0, Math.min(GRID_COLS - dragState.image.widthCells, dragState.startXCell + dxCells));
-			const newYCell = Math.max(0, Math.min(GRID_ROWS - dragState.image.heightCells, dragState.startYCell + dyCells));
+			// Clamped so the selection's bounding box stays on the grid
+			const dxCells = Math.max(dragState.minDx, Math.min(dragState.maxDx, Math.round(dx / cellSize.width)));
+			const dyCells = Math.max(dragState.minDy, Math.min(dragState.maxDy, Math.round(dy / cellSize.height)));
 
 			// If the image moved to a new cell, cancel the long press timer
-			if (dragState.isTouch && longPressTimer &&
-			    (newXCell !== dragState.startXCell || newYCell !== dragState.startYCell)) {
+			if (dragState.isTouch && longPressTimer && (dxCells !== 0 || dyCells !== 0)) {
 				clearTimeout(longPressTimer);
 				longPressTimer = null;
 			}
 
-			dragState.image.xCell = newXCell;
-			dragState.image.yCell = newYCell;
-			updateImagePosition(dragState.image);
+			dragState.group.forEach(({ image, startXCell, startYCell }) => {
+				image.xCell = startXCell + dxCells;
+				image.yCell = startYCell + dyCells;
+				updateImagePosition(image);
+			});
 		}
 	}
 
