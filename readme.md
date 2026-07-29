@@ -48,14 +48,14 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 Once you've filled out the page, press ```⌘ + P``` to print using your system's default print dialog (in Safari, this will open a formatted PDF in a new tab).
 <br>
 
-You can also press ```⌘ + E``` to export your work as a PDF, to print later or somewhere else.
-<br>
-
 >[!TIP]
->For best results...
+>When printing...
 >- select "Scale: 100%" rather than "Fit to page width"
 >- set Margins to None or 0<br>
 > <img src="readme_images/print_options.png" width=200px>
+
+You can also press ```⌘ + E``` to export your work as a PDF, to print later or somewhere else.
+<br>
 
 <img src="readme_images/printed.jpg" width=400px>
 
