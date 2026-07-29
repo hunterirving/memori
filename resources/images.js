@@ -34,8 +34,12 @@ async function loadImageDimensions(file) {
 	const img = new Image();
 	const dimensions = await new Promise(resolve => {
 		img.onload = () => {
-			const aspectRatio = img.width / img.height;
-			resolve(calculateImageDimensions(aspectRatio));
+			const aspectRatio = img.naturalWidth / img.naturalHeight;
+			resolve({
+				...calculateImageDimensions(aspectRatio),
+				naturalWidth: img.naturalWidth,
+				naturalHeight: img.naturalHeight
+			});
 		};
 		img.src = dataUrl;
 	});
@@ -77,7 +81,7 @@ async function processAndAddImages(files, dropX = 0, dropY = 0) {
 
 	let wrappedOffset = 0;
 
-	for (const { idx, dataUrl, widthCells, heightCells } of imageDataArray) {
+	for (const { idx, dataUrl, widthCells, heightCells, naturalWidth, naturalHeight } of imageDataArray) {
 		// Calculate position with diagonal offset
 		let xCell = baseXCell + idx;
 		let yCell = baseYCell + idx;
@@ -94,12 +98,12 @@ async function processAndAddImages(files, dropX = 0, dropY = 0) {
 			wrappedOffset++;
 		}
 
-		const imageData = addImage(dataUrl, xCell, yCell, widthCells, heightCells);
+		const imageData = addImage(dataUrl, xCell, yCell, widthCells, heightCells, { naturalWidth, naturalHeight });
 		imageData.container.style.zIndex = baseZIndex + idx;
 	}
 }
 
-function addImage(src, xCell, yCell, widthCells, heightCells) {
+function addImage(src, xCell, yCell, widthCells, heightCells, initialState) {
 	const container = document.createElement('div');
 	container.className = 'image-container';
 	highestZIndex++;
@@ -146,20 +150,15 @@ function addImage(src, xCell, yCell, widthCells, heightCells) {
 		// Store natural image dimensions for calculations
 		naturalWidth: 0,
 		naturalHeight: 0,
-		baseScale: 1  // scale needed to cover container
+		baseScale: 1,  // scale needed to cover container
+		// Known up front when copying an already-loaded image, so the first paint is correct
+		...initialState
 	};
 
 	// Calculate dimensions and scale once image loads
 	img.onload = () => {
 		imageData.naturalWidth = img.naturalWidth;
 		imageData.naturalHeight = img.naturalHeight;
-
-		// Calculate base scale to cover container (mimics object-fit: cover)
-		const bounds = getPixelPerfectBounds(imageData.xCell, imageData.yCell, imageData.widthCells, imageData.heightCells);
-		const scaleX = bounds.width / img.naturalWidth;
-		const scaleY = bounds.height / img.naturalHeight;
-		imageData.baseScale = Math.max(scaleX, scaleY);
-
 		updateImagePosition(imageData);
 	};
 	images.push(imageData);
@@ -218,34 +217,17 @@ function rotateImages(group) {
 // Copy an image (and its pan/zoom/rotation) to a new grid position
 function duplicateImage(imageData, newXCell, newYCell) {
 	const imgElement = imageData.container.querySelector('img');
-	const newImageData = addImage(
+	const { panX, panY, userScale, rotation, naturalWidth, naturalHeight } = imageData;
+
+	// The source is already loaded, so the copy's crop can be set before it ever paints
+	return addImage(
 		imgElement.src,
 		newXCell,
 		newYCell,
 		imageData.widthCells,
-		imageData.heightCells
+		imageData.heightCells,
+		{ panX, panY, userScale, rotation, naturalWidth, naturalHeight }
 	);
-
-	const { panX, panY, userScale, rotation } = imageData;
-	const applySettings = () => {
-		newImageData.panX = panX;
-		newImageData.panY = panY;
-		newImageData.userScale = userScale;
-		newImageData.rotation = rotation;
-		updateImagePosition(newImageData);
-	};
-
-	// Settings can only be applied once the copy's natural dimensions are known
-	const newImg = newImageData.container.querySelector('img');
-	const originalOnload = newImg.onload;
-	newImg.onload = () => {
-		if (originalOnload) originalOnload.call(newImg);
-		applySettings();
-	};
-
-	if (newImg.complete && newImageData.naturalWidth > 0) applySettings();
-
-	return newImageData;
 }
 
 function deleteImage(imageData) {
