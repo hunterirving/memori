@@ -79,24 +79,31 @@ async function processAndAddImages(files, dropX = 0, dropY = 0) {
 		imageDataArray.push({ idx, ...data });
 	}
 
+	// Shift the whole fan back onto the grid before placing anything, so a drop near an edge keeps
+	// its diagonal spacing instead of collapsing image by image
+	const fanMaxX = Math.max(...imageDataArray.map(({ idx, widthCells }) => baseXCell + idx + widthCells));
+	const fanMaxY = Math.max(...imageDataArray.map(({ idx, heightCells }) => baseYCell + idx + heightCells));
+	const fanShiftX = Math.max(Math.min(0, GRID_COLS - fanMaxX), -baseXCell);
+	const fanShiftY = Math.max(Math.min(0, GRID_ROWS - fanMaxY), -baseYCell);
+
 	let wrappedOffset = 0;
+	const placed = [];
 
 	for (const { idx, dataUrl, widthCells, heightCells, naturalWidth, naturalHeight } of imageDataArray) {
-		// Calculate position with diagonal offset
-		let xCell = baseXCell + idx;
-		let yCell = baseYCell + idx;
+		// Calculate position with diagonal offset, kept as close to the drop point as the grid allows
+		const maxXCell = GRID_COLS - widthCells;
+		const maxYCell = GRID_ROWS - heightCells;
+		let xCell = Math.max(0, Math.min(baseXCell + idx + fanShiftX, maxXCell));
+		let yCell = Math.max(0, Math.min(baseYCell + idx + fanShiftY, maxYCell));
 
-		// If out of bounds or would overlap with wrapped images, wrap to next diagonal position
-		const outOfBounds = xCell < 0 || yCell < 0 ||
-		                    xCell + widthCells > GRID_COLS ||
-		                    yCell + heightCells > GRID_ROWS;
-		const overlapsWrapped = xCell < wrappedOffset || yCell < wrappedOffset;
-
-		if (outOfBounds || overlapsWrapped) {
-			xCell = wrappedOffset;
-			yCell = wrappedOffset;
+		// Clamping can pile a multi-image drop onto one cell; cascade those from the top-left instead
+		const stacked = placed.some(p => p.xCell === xCell && p.yCell === yCell);
+		if (stacked) {
+			xCell = Math.min(wrappedOffset, maxXCell);
+			yCell = Math.min(wrappedOffset, maxYCell);
 			wrappedOffset++;
 		}
+		placed.push({ xCell, yCell });
 
 		const imageData = addImage(dataUrl, xCell, yCell, widthCells, heightCells, { naturalWidth, naturalHeight });
 		imageData.container.style.zIndex = baseZIndex + idx;

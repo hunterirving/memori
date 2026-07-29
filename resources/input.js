@@ -26,15 +26,13 @@ document.addEventListener('paste', async (e) => {
 		return;
 	}
 
-	// Use last known mouse position relative to grid, fall back to (0, 0)
+	// Use last known mouse position relative to grid; off-grid positions are clamped downstream,
+	// so only a cursor we've never seen falls back to (0, 0)
 	const gridRect = grid.getBoundingClientRect();
-	const mouseXInGrid = lastMouseX - gridRect.left;
-	const mouseYInGrid = lastMouseY - gridRect.top;
-	const isOnGrid = mouseXInGrid >= 0 && mouseYInGrid >= 0 &&
-		mouseXInGrid <= gridRect.width && mouseYInGrid <= gridRect.height;
+	const hasCursor = lastMouseX >= 0 && lastMouseY >= 0;
 
-	const dropX = isOnGrid ? mouseXInGrid : 0;
-	const dropY = isOnGrid ? mouseYInGrid : 0;
+	const dropX = hasCursor ? lastMouseX - gridRect.left : 0;
+	const dropY = hasCursor ? lastMouseY - gridRect.top : 0;
 
 	await processAndAddImages(imageFiles, dropX, dropY);
 });
