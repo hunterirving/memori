@@ -377,3 +377,10 @@ function bringToFront(container) {
 	highestZIndex++;
 	container.style.zIndex = highestZIndex;
 }
+
+// Raise a whole group above everything else, keeping its members' order relative to one another
+function bringGroupToFront(group) {
+	[...group]
+		.sort((a, b) => (parseInt(a.container.style.zIndex, 10) || 0) - (parseInt(b.container.style.zIndex, 10) || 0))
+		.forEach(img => bringToFront(img.container));
+}

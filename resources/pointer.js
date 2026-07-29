@@ -3,8 +3,9 @@
 function setupImageHandlers(imageData) {
 	const container = imageData.container;
 
-	// Bring to front on hover
+	// Bring to front on hover, except within a selection, where it would shuffle the group's paint order
 	container.addEventListener('mouseenter', () => {
+		if (isSelected(imageData)) return;
 		bringToFront(container);
 	});
 
@@ -18,6 +19,7 @@ function setupImageHandlers(imageData) {
 
 		// Dragging a selected image moves the whole selection
 		const group = isSelected(imageData) ? Array.from(selectedImages) : [imageData];
+		bringGroupToFront(group);
 		const bounds = selectionBounds(group);
 
 		dragState = {
@@ -70,10 +72,13 @@ function setupImageHandlers(imageData) {
 	container.addEventListener('touchstart', (e) => {
 		if (e.target.classList.contains('resize-handle')) return;
 
-		// Bring to front on touch
-		bringToFront(container);
-
-		if (!isSelected(imageData)) clearSelection();
+		// Bring to front on touch; a selected image is raised with its group instead
+		if (isSelected(imageData)) {
+			bringGroupToFront(Array.from(selectedImages));
+		} else {
+			bringToFront(container);
+			clearSelection();
+		}
 
 		if (e.touches.length === 1) {
 			// Single touch - start drag (or long press for pan)
