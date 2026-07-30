@@ -2,6 +2,10 @@
 
 A free photo-printing tool that perfectly sizes images to fit the <a href="https://www.1101.com/store/techo/en/about/">Hobonichi Techo</a>'s grid paper.
 
+<p align="center">
+	<img src="readme_images/juneyo.jpg" width=350>
+</p>
+
 ## usage
 Different Techo types use differently-sized grid paper. Use the links below to select the appropriate grid size for your Techo:
 
@@ -40,7 +44,8 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 - ```shift + click``` an image to delete it<br>
 <img src="readme_images/delete.gif">
 
-- click an empty part of the grid and drag to select multiple images at once, then move, duplicate, rotate, or delete them as a group
+- click an empty part of the grid and drag to select multiple images at once, then move, duplicate, rotate, or delete them as a group<br>
+<img src="readme_images/multi_select.gif">
 
 - press ```F2``` to select from one of seven user interface themes (you may also have to hold ```Fn```)<br>
 <img src="readme_images/select_theme.gif">
@@ -69,10 +74,10 @@ Then stick 'em down with a gluestick (or try printing with sticker paper):
 
 What will you remember?
 
-<img src="readme_images/spread2.jpg" width=400px>
-
-## disclaimer
-This project is not affiliated with, endorsed by, or sponsored by Hobonichi Co., Ltd. or any of its subsidiaries. Hobonichi, Hobonichi Techo, and related trademarks are the property of their respective owners. This is an independent, unofficial tool created for personal use.
+<img src="readme_images/crt.jpg" width=400px>
 
 ## license
 <a href="LICENSE">GNU GPLv3</a>
+
+## notice
+this project is not affiliated with, endorsed by, or sponsored by Hobonichi Co., Ltd. or any of its subsidiaries. Hobonichi, Hobonichi Techo, and related trademarks are the property of their respective owners. memori is an independent, unofficial tool created for personal use.
