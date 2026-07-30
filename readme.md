@@ -3,7 +3,7 @@
 A free photo-printing tool that perfectly sizes images to fit the <a href="https://www.1101.com/store/techo/en/about/">Hobonichi Techo</a>'s grid paper.
 
 <p align="center">
-	<img src="readme_images/juneyo.jpg" width=350>
+	<br><img src="readme_images/juneyo.jpg" width=400>
 </p>
 
 ## usage
