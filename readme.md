@@ -18,7 +18,7 @@ Different Techo types use differently-sized grid paper. Use the links below to s
 
 ### controls
 
-- after opening memori in your web browser, drag one or more images from your desktop onto the grid (or press `⌘ + v` to paste image data from your clipboard)<br>
+- after opening memori in your web browser, drag one or more image files from your computer onto the grid (or press `⌘ + v` to paste image data from your clipboard)<br>
 <img src="readme_images/drag_n_drop.gif">
 
 - click and drag images to move them<br>
