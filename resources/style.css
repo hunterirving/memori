@@ -98,6 +98,7 @@
 
 	--theme-transition: 250ms ease;
 	--marquee-fade: 75ms;
+	--page-radius: 0px;
 	transition:
 		--desk var(--theme-transition),
 		--page var(--theme-transition),
@@ -106,7 +107,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	:root {
+	:root,
+	.page.theming {
 		transition: none;
 	}
 }
@@ -159,6 +161,7 @@
 	--page: var(--nori);
 	--grid-line: var(--pesto);
 	--accent: var(--beet);
+	--page-radius: 2.45% / 1.89%;
 
 	& .add-images-btn,
 	& .popup-notification {
@@ -190,10 +193,15 @@ body {
 	aspect-ratio: 8.5 / 11;
 	background: var(--page);
 	position: relative;
+	border-radius: var(--page-radius);
 	box-shadow: 0 8px 24px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08);
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+.page.theming {
+	transition: border-radius var(--theme-transition);
 }
 
 .grid {
@@ -258,6 +266,7 @@ body {
 
 	.page {
 		box-shadow: none;
+		border-radius: 0;
 	}
 
 	.grid-cell {
@@ -562,6 +571,7 @@ body.selecting .image-container {
 		width: auto !important;
 		height: auto !important;
 		max-width: none !important;
+		border-radius: 0 !important;
 		box-shadow: none;
 		margin: 0;
 		padding: 0;

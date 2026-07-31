@@ -4,6 +4,8 @@ let isF2Pressed = false;
 const themes = ['sea-breeze', 'grape-soda', 'grapefruit', 'guac', 'mojito', 'banana', 'pantry'];
 const DEFAULT_THEME = 'guac';
 const DEFAULT_DARK_THEME = 'pantry';
+const THEME_TRANSITION_MS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--theme-transition'));
+let pageTransitionTimer = null;
 
 function syncThemeColorMeta() {
 	const backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--desk').trim();
@@ -21,9 +23,20 @@ document.documentElement.addEventListener('transitionend', (e) => {
 	}
 });
 
-function cycleTheme() {
-	currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+// Only do border-radius transition on page when changing themes
+function withPageTransition() {
+	const page = document.querySelector('.page');
+	if (!page) return;
+
+	page.classList.add('theming');
+	clearTimeout(pageTransitionTimer);
+	pageTransitionTimer = setTimeout(() => page.classList.remove('theming'), THEME_TRANSITION_MS + 50);
+}
+
+function cycleTheme(step = 1) {
+	currentThemeIndex = (currentThemeIndex + step + themes.length) % themes.length;
 	const newTheme = themes[currentThemeIndex];
+	withPageTransition();
 	setTheme(newTheme);
 	saveThemeToLocalStorage(newTheme);
 }
@@ -45,12 +58,12 @@ function loadThemeFromLocalStorage() {
 	}
 }
 
-// F2 key handler for theme cycling
+// F2 cycles themes, shift+F2 cycles backwards
 document.addEventListener('keydown', (e) => {
 	if (e.key === 'F2' && !isF2Pressed) {
 		e.preventDefault();
 		isF2Pressed = true;
-		cycleTheme();
+		cycleTheme(e.shiftKey ? -1 : 1);
 	}
 });
 
