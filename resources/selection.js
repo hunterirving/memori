@@ -2,6 +2,7 @@
 
 let selectedImages = new Set();
 let marqueeState = null;
+const MARQUEE_FADE_MS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--marquee-fade'));
 
 const selectionBox = document.createElement('div');
 selectionBox.className = 'selection-box';
@@ -88,11 +89,21 @@ function handleMarqueeMove(clientX, clientY) {
 	updateMarquee();
 }
 
+function fadeOutMarquee() {
+	const ghost = selectionBox.cloneNode();
+	ghost.classList.add('releasing');
+	grid.appendChild(ghost);
+	setTimeout(() => ghost.remove(), MARQUEE_FADE_MS + 50);
+}
+
 function endMarquee() {
 	if (!marqueeState) return;
 	marqueeState = null;
-	selectionBox.style.display = 'none';
 	document.body.classList.remove('selecting');
+
+	if (selectionBox.style.display === 'none') return;
+	fadeOutMarquee();
+	selectionBox.style.display = 'none';
 }
 
 document.addEventListener('mousemove', (e) => handleMarqueeMove(e.clientX, e.clientY));

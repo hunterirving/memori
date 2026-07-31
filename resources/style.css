@@ -97,6 +97,7 @@
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
 	--theme-transition: 250ms ease;
+	--marquee-fade: 75ms;
 	transition:
 		--desk var(--theme-transition),
 		--page var(--theme-transition),
@@ -375,6 +376,16 @@ body.dragging * {
 	background: color-mix(in srgb, var(--accent) 50%, transparent);
 	pointer-events: none;
 	z-index: 999999;
+}
+
+.selection-box.releasing {
+	animation: fade-out-marquee var(--marquee-fade) ease-out forwards;
+}
+
+@keyframes fade-out-marquee {
+	to {
+		opacity: 0;
+	}
 }
 
 body.selecting,
