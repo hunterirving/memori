@@ -1,11 +1,3 @@
-/* Registered so theme swaps can be transitioned — plain custom properties don't animate.
-   Everything downstream (borders, color-mix, scrollbars) follows for free. */
-@property --desk {
-	syntax: '<color>';
-	inherits: true;
-	initial-value: #7a8520;
-}
-
 @property --page {
 	syntax: '<color>';
 	inherits: true;
@@ -100,17 +92,14 @@
 	--marquee-fade: 75ms;
 	--page-radius: 0px;
 	transition:
-		--desk var(--theme-transition),
 		--page var(--theme-transition),
 		--grid-line var(--theme-transition),
 		--accent var(--theme-transition);
 }
 
-@media (prefers-reduced-motion: reduce) {
-	:root,
-	.page.theming {
-		transition: none;
-	}
+:root.no-theme-transition,
+:root.no-theme-transition body {
+	transition: none;
 }
 
 /* Theme definitions */
@@ -179,13 +168,14 @@
 }
 
 body {
-	background: var(--desk);
+	background-color: var(--desk);
 	display: flex;
 	justify-content: center;
 	align-items: flex-start;
 	align-items: safe center;
 	min-height: 100vh;
 	padding: 20px;
+	transition: background-color var(--theme-transition);
 }
 
 .page {
@@ -202,6 +192,14 @@ body {
 
 .page.theming {
 	transition: border-radius var(--theme-transition);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root,
+	:root body,
+	.page.theming {
+		transition: none;
+	}
 }
 
 .grid {
@@ -266,7 +264,6 @@ body {
 
 	.page {
 		box-shadow: none;
-		border-radius: 0;
 	}
 
 	.grid-cell {
@@ -512,12 +509,11 @@ body.selecting .image-container {
 		overscroll-behavior: none;
 	}
 
-	/* Only fix position in portrait mode to prevent scroll issues in landscape */
 	@media (orientation: portrait) {
 		html, body {
 			height: 100%;
-			position: fixed;
 			width: 100%;
+			overflow: hidden;
 		}
 	}
 
